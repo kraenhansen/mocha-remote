@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
-    "prepack": "cp ../../README.md ."
+    "postpack": "node ../../scripts/add-statics-to-archive.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
