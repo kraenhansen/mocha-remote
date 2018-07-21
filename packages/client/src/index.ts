@@ -12,6 +12,8 @@ interface IInstrumentedMocha extends Mocha {
   originalRun: (fn?: (failures: number) => void) => Mocha.Runner;
 }
 
+export type RunCallback = (runner: Mocha.Runner) => void;
+
 const debug = Debug("mocha-remote:client");
 
 export interface IMochaRemoteClientConfig {
@@ -40,6 +42,7 @@ export class MochaRemoteClient {
   private config: IMochaRemoteClientConfig;
   private ws?: WebSocket;
   private mocha?: IInstrumentedMocha;
+  private runCallback?: RunCallback;
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -67,8 +70,9 @@ export class MochaRemoteClient {
     }
   }
 
-  public instrument(mocha: Mocha) {
+  public instrument(mocha: Mocha, runCallback?: RunCallback) {
     this.mocha = mocha as IInstrumentedMocha;
+    this.runCallback = runCallback;
     // Monkey patch the run method
     this.mocha.originalRun = mocha.run;
     mocha.run = () => {
@@ -119,7 +123,11 @@ export class MochaRemoteClient {
     debug(`Received a '${data.eventName}' message`);
     if (data.eventName === "run") {
       // TODO: Receive runtime options from the server and set these on the instrumented mocha instance before running
-      this.run();
+      const runner = this.run();
+      // If the user that instrumented the mocha instance wants a callback called - we'll do that
+      if (this.runCallback) {
+        this.runCallback(runner);
+      }
     }
   }
 
