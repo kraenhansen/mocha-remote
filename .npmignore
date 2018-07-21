@@ -1,0 +1,3 @@
+# Omit everything except the README.md, package.json and postinstall script
+*
+!scripts/postinstall.js
