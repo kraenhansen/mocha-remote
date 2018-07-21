@@ -18,7 +18,7 @@ Install the client in the package that will be running tests.
 This will probably be an example app in a particular environment from which you want to run your tests.
 
 ```
-npm install moche-remote-client --save
+npm install mocha-remote-client --save
 ```
 
 ## Installing the server
@@ -26,7 +26,7 @@ npm install moche-remote-client --save
 Install the server in the package from where you want reporting
 
 ```
-npm install moche-remote-server --save-dev
+npm install mocha-remote-server --save-dev
 ```
 
 Note: This could easily be wrapped into a mocha compatible cli.
