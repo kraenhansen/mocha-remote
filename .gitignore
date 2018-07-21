@@ -1,2 +1,4 @@
 node_modules/
-packages/**/dist/
+packages/*/dist/
+packages/*/*.tgz
+.DS_Store

@@ -3,7 +3,7 @@ import { stringify } from "flatted";
 import * as WebSocket from "isomorphic-ws";
 import * as Mocha from "mocha";
 
-export interface IEventMessage {
+interface IEventMessage {
   eventName: string;
   args: any[];
 }

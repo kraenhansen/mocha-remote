@@ -4,7 +4,7 @@ import { parse } from "flatted";
 import * as Mocha from "mocha";
 import * as WebSocket from "ws";
 
-export interface IEventMessage {
+interface IEventMessage {
   eventName: string;
   args: any[];
 }
@@ -36,7 +36,7 @@ export class MochaRemoteServer extends Mocha {
 
   public start() {
     debug(`Server is starting`);
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       this.wss = new WebSocket.Server({
         host: this.config.host,
         port: this.config.port,
