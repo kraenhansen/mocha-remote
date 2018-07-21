@@ -1,9 +1,9 @@
 {
   "name": "mocha-remote-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
-    "postpack": "node ../../scripts/add-statics-to-archive.js"
+    "prepack": "cp -r ../../docs ../../README.md ."
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
