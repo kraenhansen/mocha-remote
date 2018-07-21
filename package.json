@@ -16,7 +16,7 @@
     "build": "npm run client/build && npm run server/build",
     "package": "npm run client/package && npm run server/package",
     "postversion": "node scripts/update-versions.js",
-    "prepublish": "node scripts/prepublish.js",
+    "postinstall": "node scripts/postinstall.js",
     "postpublish": "npm run client/publish && npm run server/publish"
   },
   "author": {
