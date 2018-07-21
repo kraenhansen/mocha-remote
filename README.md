@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/logo.svg" alt="Mocha Remote"/>
+  <img src="https://github.com/kraenhansen/mocha-remote/raw/master/docs/logo.svg?sanitize=true" alt="Mocha Remote"/>
 </p>
 
 <p align="center">
