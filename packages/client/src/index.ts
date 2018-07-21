@@ -48,14 +48,14 @@ export class MochaRemoteClient {
     }
   }
 
-  public connect() {
-    return new Promise((resolve) => {
-      this.ws = new WebSocket(this.config.url, "mocha-remote");
-      this.ws.addEventListener("message", this.onMessage);
-      this.ws.addEventListener("open", () => {
-        debug(`Connected to ${this.config.url}`);
-        resolve();
-      });
+  public connect(fn?: () => void) {
+    this.ws = new WebSocket(this.config.url, "mocha-remote");
+    this.ws.addEventListener("message", this.onMessage);
+    this.ws.addEventListener("open", () => {
+      debug(`Connected to ${this.config.url}`);
+      if (fn) {
+        fn();
+      }
     });
   }
 

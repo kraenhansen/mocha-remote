@@ -15,7 +15,7 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
 
   afterEach(async () => {
     if (client) {
-      await client.disconnect();
+      client.disconnect();
     }
     if (server) {
       await server.stop();
@@ -43,7 +43,7 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
     // Await the client connecting and the server emitting an event
     await Promise.all([
       serverConnection,
-      client.connect(),
+      new Promise((resolve) => client.connect(resolve)),
     ]);
   });
 
@@ -59,7 +59,14 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
     client = new MochaRemoteClient({ url: server.getUrl() });
     await client.connect();
     const mocha = new MockedMocha() as Mocha;
-    client.instrument(mocha);
+    // Let's instrument the mocha instance and resolve a promise when the tests start
+    const clientRunningPromise = new Promise((resolve) => {
+      client.instrument(mocha, (runner) => {
+        // TODO: Check that its an instance of Mocha.Runner?
+        expect(runner).to.be.an("object");
+        resolve();
+      });
+    });
 
     await new Promise((resolve) => {
       // Asking the server to start the run
@@ -68,6 +75,8 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
         resolve();
       });
     });
+
+    await clientRunningPromise;
   });
 
   describe("running a Mocha test suite", () => {
