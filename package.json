@@ -15,7 +15,8 @@
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "npm run client/build && npm run server/build",
     "package": "npm run client/package && npm run server/package",
-    "postversion": "node scripts/update-versions.js"
+    "postversion": "node scripts/update-versions.js",
+    "postinstall": "node scripts/postinstall.js"
   },
   "author": {
     "name": "Kræn Hansen",
