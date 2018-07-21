@@ -9,6 +9,8 @@
     "server/build": "cd packages/server; tsc -p tsconfig.json",
     "client/package": "cd packages/client; npm pack",
     "server/package": "cd packages/server; npm pack",
+    "client/publish": "cd packages/client; npm publish",
+    "server/publish": "cd packages/server; npm publish",
     "test": "mocha --opts configs/mocha.opts packages/*/src/**/*.test.ts integration-tests/**/*.test.ts",
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "npm run client/build && npm run server/build",
