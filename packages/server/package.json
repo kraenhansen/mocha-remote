@@ -1,0 +1,22 @@
+{
+  "name": "mocha-remote-server",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": {
+    "name": "Kræn Hansen",
+    "email": "mail@kraenhansen.dk",
+    "url": "https://github.com/kraenhansen"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/debug": "0.0.30",
+    "@types/ws": "^5.1.2",
+    "chai": "^4.1.2"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "flatted": "^0.2.3",
+    "ws": "^5.2.2"
+  }
+}

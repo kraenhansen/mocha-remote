@@ -1,0 +1,3 @@
+-r ts-node/register
+--watch-extensions ts
+--forbid-only

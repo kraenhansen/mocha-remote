@@ -1,0 +1,34 @@
+{
+  "name": "mocha-remote",
+  "version": "0.1.0",
+  "description": "Run your Mocha tests somewhere and get reporting elsewhere",
+  "scripts": {
+    "client/install": "cd packages/client; npm install",
+    "server/install": "cd packages/server; npm install",
+    "client/build": "cd packages/client; tsc -p tsconfig.json",
+    "server/build": "cd packages/server; tsc -p tsconfig.json",
+    "test": "mocha --opts configs/mocha.opts packages/*/src/**/*.test.ts integration-tests/**/*.test.ts",
+    "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
+    "build": "npm run client/build && npm run server/build"
+  },
+  "author": {
+    "name": "Kræn Hansen",
+    "email": "mail@kraenhansen.dk",
+    "url": "https://github.com/kraenhansen"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.5.2",
+    "@types/ws": "^5.1.2",
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "mocha-remote-client": "./packages/client",
+    "mocha-remote-server": "./packages/server",
+    "ts-node": "^7.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^2.9.2",
+    "ws": "^5.2.2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "strict": true,
+    "moduleResolution": "node",
+
+    "noImplicitReturns": true,
+
+    "typeRoots": [
+      "./types",
+    ],
+    "types": [
+      "mocha",
+      "node",
+      "chai",
+      "flatted",
+      "isomorphic-ws",
+      "ws"
+    ]
+  }
+}

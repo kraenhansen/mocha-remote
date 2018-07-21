@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "strict": true,
+
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+
+    "noResolve": true,
+    "typeRoots": [
+      "../../types",
+      "./node_modules/@types"
+    ],
+    "types": [
+      "debug",
+      "mocha",
+      "flatted",
+      "node",
+      "ws"
+    ]
+  },
+  "files": [
+    "src/index.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "../client"
+  ]
+}

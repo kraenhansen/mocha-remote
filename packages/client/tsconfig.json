@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "strict": true,
+
+    "noUnusedLocals": true,
+    "noImplicitReturns": true,
+
+    "noResolve": true,
+    "typeRoots": [
+      "./types",
+      "../../types",
+    ],
+    "types": [
+      "debug",
+      "mocha",
+      "isomorphic-ws",
+      "flatted"
+    ]
+  },
+  "files": [
+    "src/index.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "../server"
+  ]
+}
