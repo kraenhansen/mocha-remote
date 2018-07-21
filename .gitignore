@@ -1,6 +1,7 @@
 # Build artifacts
 packages/*/dist/
 packages/*/*.tgz
+packages/*/README.md
 
 # Mac files
 .DS_Store
