@@ -13,7 +13,7 @@
     "noResolve": true,
     "typeRoots": [
       "./types",
-      "../../types",
+      "../../types"
     ],
     "types": [
       "debug",
