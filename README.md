@@ -14,8 +14,8 @@ difficult to control it, start / stop external services and get reporting on whi
 
 ## Please Note: This is very early-stage
 
-I just created this - I would appreciate a shout out on Twitter @kraenhansen if you actually start using this or have
-suggestions on how to improve the library and its interface.
+I just created this - I would appreciate a shout out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you
+actually start using this or have suggestions on how to improve the library and its interface.
 
 ## Installing the client
 
