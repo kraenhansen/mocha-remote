@@ -8,7 +8,7 @@
   },
   "main": "index.js",
   "bin": {
-    "mocha-remote": "./lib/bin.js"
+    "mocha-remote": "./lib/mocha-remote.js"
   },
   "author": {
     "name": "Kræn Hansen",
@@ -23,7 +23,7 @@
   "license": "ISC",
   "dependencies": {
     "debug": "^3.1.0",
-    "mocha-remote-server": "^0.2.4"
+    "mocha-remote-server": "^0.3.0"
   },
   "devDependencies": {
     "mocha-remote-server": "file://../server",
