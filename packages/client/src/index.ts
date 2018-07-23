@@ -17,6 +17,7 @@ export type RunCallback = (runner: Mocha.Runner) => void;
 const debug = Debug("mocha-remote:client");
 
 export interface IMochaRemoteClientConfig {
+  autoConnect: boolean;
   /** Fail silently and perform automatic retrying when connecting to the server */
   autoRetry: boolean;
   /** If retrying connecting, delay retrys by this amount of milliseconds */
@@ -26,6 +27,7 @@ export interface IMochaRemoteClientConfig {
 }
 
 export const DEFAULT_CONFIG: IMochaRemoteClientConfig = {
+  autoConnect: true,
   autoRetry: true,
   retryDelay: 500,
   url: "ws://localhost:8090",
@@ -56,6 +58,8 @@ export class MochaRemoteClient {
     this.config = { ...DEFAULT_CONFIG, ...config };
     if (typeof(WebSocket) === "undefined") {
       throw new Error("mocha-remote-client expects a global WebSocket");
+    } else if (this.config.autoConnect) {
+      this.connect();
     }
   }
 
@@ -147,13 +151,15 @@ export class MochaRemoteClient {
   private onError = (fn: () => void | undefined, err: Error) => {
     const delay = this.config.retryDelay;
     if (this.config.autoRetry) {
+      const shouldReconnect = this.shouldReconnect(err);
       debug(`Failed connecting to server (retrying in ${delay}ms): ${err.message}`);
-      if (err.message.indexOf("ECONNREFUSED") >= 0) {
+      if (shouldReconnect) {
         this.retryTimeout = setTimeout(() => {
           this.connect(fn);
         }, this.config.retryDelay) as any as number;
       } else {
-        throw new Error(`Failed connecting to server: ${err.stack}`);
+        const message = err ? err.stack || err.message : "No message";
+        throw new Error(`Failed connecting to server: ${message}`);
       }
     } else {
       throw new Error(`Failed connecting to server: ${err.stack}`);
@@ -172,6 +178,20 @@ export class MochaRemoteClient {
         });
       }
     };
+  }
+
+  private shouldReconnect(err: Error | null) {
+    if (!err || !err.message) {
+      return true;
+    } else if (err.message.indexOf("ECONNREFUSED") >= 0) {
+      return true;
+    } else if (err.message.indexOf("unexpected end of stream") >= 0) {
+      return true;
+    } else if (err.message.indexOf("Connection reset") >= 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
 }
