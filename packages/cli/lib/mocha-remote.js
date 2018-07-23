@@ -3,6 +3,7 @@
 // Monkey patches the Node.js require to intercept the call to "spawn"
 
 const Module = require("module");
+const { existsSync } = require("fs");
 const { resolve } = require("path");
 
 const originalRequire = Module.prototype.require;
@@ -24,4 +25,19 @@ Module.prototype.require = function() {
 };
 
 // Start the original mocha bin
-require("mocha/bin/mocha");
+try {
+  // Check if a local version of the mocha bin exists (when installed as a peer dependency)
+  const localMochaPath = resolve(process.cwd(), "node_modules/mocha/bin/mocha");
+  if (existsSync(localMochaPath)) {
+    require(localMochaPath);
+  } else {
+    require("mocha/bin/mocha");
+  }
+} catch (err) {
+  if (err.message === "Cannot find module 'mocha/bin/mocha'") {
+    console.error("💥 Run `npm install mocha --save-dev` to install mocha before calling mocha-remote");
+  } else {
+    console.error(err.stack);
+  }
+  process.exit(1);
+}
