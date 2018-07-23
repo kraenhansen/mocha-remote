@@ -21,7 +21,7 @@ function triggerClientTimeout() {
 // Override the called when waiting for a client
 DEFAULT_CONFIG.callbacks = {
   serverStarted: (server) => {
-    console.log(`Mocha Remote server listening on ${server.getUrl()}`);
+    console.log(`Mocha Remote server is waiting for a client on ${server.getUrl()}`);
     // If a client timeout is set - trigger it appropriately
     if (CLIENT_TIMEOUT) {
       clientTimeout = setTimeout(triggerClientTimeout, CLIENT_TIMEOUT)
