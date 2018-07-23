@@ -7,13 +7,13 @@
     "test": "mocha"
   },
   "dependencies": {
-    "mocha": "^5.2.0",
     "react": "16.4.1",
     "react-native": "0.56.0"
   },
   "devDependencies": {
     "babel-preset-react-native": "^5",
-    "react-test-renderer": "16.4.1",
-    "mocha-remote-cli": "file://../../../../packages/cli"
+    "mocha": "^5.2.0",
+    "mocha-remote-cli": "file://../../../../packages/cli",
+    "react-test-renderer": "16.4.1"
   }
 }
