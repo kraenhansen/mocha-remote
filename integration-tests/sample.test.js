@@ -3,7 +3,11 @@ describe("A suite", () => {
     it("can pass", () => {
       console.log("Hello from a passing test");
     });
-    it("can fail", () => { throw new Error("some failure"); });
-    it.skip("can skip", () => {});
+    it("can fail", () => {
+      throw new Error("some failure");
+    });
+    it.skip("can skip", () => {
+      /* tumbleweed */
+    });
   });
 });

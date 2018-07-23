@@ -3,6 +3,7 @@
   "version": "0.2.4",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
+    "cli/install": "cd packages/cli; npm install",
     "client/install": "cd packages/client; npm install",
     "server/install": "cd packages/server; npm install",
     "client/build": "cd packages/client; tsc -p tsconfig.json",
@@ -11,13 +12,13 @@
     "server/package": "cd packages/server; npm pack",
     "client/publish": "cd packages/client; npm publish",
     "server/publish": "cd packages/server; npm publish",
-    "test": "mocha --opts configs/mocha.opts packages/*/src/**/*.test.ts integration-tests/**/*.test.ts",
+    "test": "mocha --opts configs/mocha.opts packages/*/src/**/*.test.ts packages/cli/test/*.test.js integration-tests/**/*.test.ts",
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "npm run client/build && npm run server/build",
     "package": "npm run client/package && npm run server/package",
     "postversion": "node scripts/update-versions.js",
     "postinstall": "node scripts/postinstall.js",
-    "postpublish": "npm run client/publish && npm run server/publish"
+    "postpublish": "npm run cli/publish && npm run client/publish && npm run server/publish"
   },
   "author": {
     "name": "Kræn Hansen",

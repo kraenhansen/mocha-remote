@@ -17,11 +17,18 @@ export type RunCallback = (runner: Mocha.Runner) => void;
 const debug = Debug("mocha-remote:client");
 
 export interface IMochaRemoteClientConfig {
+  /** Fail silently and perform automatic retrying when connecting to the server */
+  autoRetry: boolean;
+  /** If retrying connecting, delay retrys by this amount of milliseconds */
+  retryDelay: number;
+  /** The websocket URL of the server, ex: ws://localhost:8090 */
   url: string;
 }
 
-const DEFAULT_CONFIG: IMochaRemoteClientConfig = {
-  url: "http://localhost:8090",
+export const DEFAULT_CONFIG: IMochaRemoteClientConfig = {
+  autoRetry: true,
+  retryDelay: 500,
+  url: "ws://localhost:8090",
 };
 
 const MOCHA_EVENT_NAMES = [
@@ -43,6 +50,7 @@ export class MochaRemoteClient {
   private ws?: WebSocket;
   private mocha?: IInstrumentedMocha;
   private runCallback?: RunCallback;
+  private retryTimeout?: number;
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -52,7 +60,9 @@ export class MochaRemoteClient {
   }
 
   public connect(fn?: () => void) {
+    debug(`Connecting to ${this.config.url}`);
     this.ws = new WebSocket(this.config.url, "mocha-remote");
+    this.ws.addEventListener("error", this.onError.bind(this, fn));
     this.ws.addEventListener("message", this.onMessage);
     this.ws.addEventListener("open", () => {
       debug(`Connected to ${this.config.url}`);
@@ -67,6 +77,9 @@ export class MochaRemoteClient {
       this.ws.close();
       debug(`Disconnected from server`);
       delete this.ws;
+    }
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
     }
   }
 
@@ -128,6 +141,22 @@ export class MochaRemoteClient {
       if (this.runCallback) {
         this.runCallback(runner);
       }
+    }
+  }
+
+  private onError = (fn: () => void | undefined, err: Error) => {
+    const delay = this.config.retryDelay;
+    if (this.config.autoRetry) {
+      debug(`Failed connecting to server (retrying in ${delay}ms): ${err.message}`);
+      if (err.message.indexOf("ECONNREFUSED") >= 0) {
+        this.retryTimeout = setTimeout(() => {
+          this.connect(fn);
+        }, this.config.retryDelay) as any as number;
+      } else {
+        throw new Error(`Failed connecting to server: ${err.stack}`);
+      }
+    } else {
+      throw new Error(`Failed connecting to server: ${err.stack}`);
     }
   }
 

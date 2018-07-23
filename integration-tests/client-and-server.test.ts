@@ -26,12 +26,12 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
     // Create a server - which is supposed to run in Node
     server = new MochaRemoteServer();
     await server.start();
-    expect(server.getUrl()).to.equal("ws://127.0.0.1:9080");
+    expect(server.getUrl()).to.equal("ws://127.0.0.1:8090");
   });
 
   it("connects", async () => {
     // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer({ port: 0 });
+    server = new MochaRemoteServer({}, { port: 0 });
     await server.start();
     const serverConnection = new Promise((resolve) => {
       (server as any).wss.once("connection", () => {
@@ -50,7 +50,8 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
   it("can start client from the server", async () => {
     // Create a server - which is supposed to run in Node
     server = new MochaRemoteServer({
-      mochaOptions: { reporter: "base" /* to prevent output */ },
+      reporter: "base", /* to prevent output */
+    }, {
       port: 0,
     });
     await server.start();
@@ -151,7 +152,7 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
           it("completes through the remote", async () => {
             // Run the mocha with the mocha-remote-client as reporter
             // Create a server with the reporter that we're testing with
-            server = new MochaRemoteServer({ port: 0, mochaOptions: { reporter } });
+            server = new MochaRemoteServer({ reporter }, { port: 0 });
             await server.start();
             // Create a client - which is supposed to run where the tests are running
             client = new MochaRemoteClient({ url: server.getUrl() });

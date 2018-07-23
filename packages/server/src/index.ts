@@ -11,16 +11,31 @@ interface IEventMessage {
 
 const debug = Debug("mocha-remote:server");
 
-export interface IMochaRemoteServerConfig {
-  host: string;
-  port: number;
-  mochaOptions?: Mocha.MochaOptions;
-  suite?: Mocha.Suite;
+export interface ICallbacks {
+  /** Called when the server is waiting for a client to connect */
+  waitingForClient?: () => void;
+  /** Client connected */
+  clientConnection?: (client: WebSocket) => void;
+  /** Called when the server has started */
+  serverStarted?: (server: MochaRemoteServer) => void;
+  /** Called when the server experience an error */
+  serverFailed?: (server: MochaRemoteServer, err: Error) => void;
 }
 
-const DEFAULT_CONFIG: IMochaRemoteServerConfig = {
+export interface IMochaRemoteServerConfig {
+  autoStart: boolean;
+  callbacks: Partial<ICallbacks>;
+  host: string;
+  port: number;
+  stopAfterCompletion: boolean;
+}
+
+export const DEFAULT_CONFIG: IMochaRemoteServerConfig = {
+  autoStart: true,
+  callbacks: {},
   host: "127.0.0.1",
-  port: 9080,
+  port: 8090,
+  stopAfterCompletion: false,
 };
 
 export class MochaRemoteServer extends Mocha {
@@ -29,14 +44,17 @@ export class MochaRemoteServer extends Mocha {
   private client?: WebSocket;
   private runner?: Mocha.Runner;
 
-  constructor(config: Partial<IMochaRemoteServerConfig> = {}) {
-    super(config.mochaOptions);
+  constructor(
+    mochaOptions: Mocha.MochaOptions = {},
+    config: Partial<IMochaRemoteServerConfig> = {},
+  ) {
+    super(mochaOptions);
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
   public start() {
     debug(`Server is starting`);
-    return new Promise<void>((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       this.wss = new WebSocket.Server({
         host: this.config.host,
         port: this.config.port,
@@ -45,6 +63,13 @@ export class MochaRemoteServer extends Mocha {
       this.wss.once("listening", () => {
         debug(`Server is listening on ${this.getUrl()}`);
         resolve();
+      });
+      this.wss.once("error", (err: Error) => {
+        debug(`Server failed to start ${err.stack}`);
+        if (this.config.callbacks.serverFailed) {
+          this.config.callbacks.serverFailed(this, err);
+        }
+        reject(err);
       });
       // When a client connects
       this.wss.on("connection", (ws) => {
@@ -56,11 +81,20 @@ export class MochaRemoteServer extends Mocha {
         // Hang onto the client
         this.client = ws;
         this.client.on("message", this.onMessage);
+        // Signal that a client has connected
+        if (this.config.callbacks.clientConnection) {
+          this.config.callbacks.clientConnection(this.client);
+        }
         // If we already have a runner, it can run now that we have a client
         if (this.runner) {
           this.send("run");
         }
       });
+    }).then(() => {
+      if (this.config.callbacks.serverStarted) {
+        this.config.callbacks.serverStarted(this);
+      }
+      // If a timeout is set - close the server if no
     });
   }
 
@@ -85,22 +119,38 @@ export class MochaRemoteServer extends Mocha {
   }
 
   public run(fn?: (failures: number) => void) {
+    debug("Server started running tests");
+
+    if (!this.wss) {
+      if (this.config.autoStart) {
+        this.start().then(undefined, (err) => {
+          debug(`Auto-starting failed: ${err.stack}`);
+        });
+      } else {
+        throw new Error("Server must be started before run is called");
+      }
+    }
+
     if (this.runner) {
       throw new Error("A run is already in progress");
     }
     // this.runner = new Mocha.Runner(this.suite, this.options.delay || false);
+    // TODO: Stub this to match the Runner's interface
     this.runner = new EventEmitter() as Mocha.Runner;
     // If we already have a client, tell it to run
     if (this.client) {
       // TODO: Send runtime options to the client
       this.send("run");
+    } else if (this.config.callbacks.waitingForClient) {
+      this.config.callbacks.waitingForClient();
     }
 
     // We need to access the private _reporter field
     const Reporter = (this as any)._reporter;
     const reporter = new Reporter(this.runner, this.options.reporterOptions);
 
-    function done(failures: number) {
+    const done = (failures: number) => {
+      debug("Server ended testing");
       // If the reporter wants to know when we're done, we will tell it
       // It will call the fn callback for us
       if (reporter.done) {
@@ -112,11 +162,18 @@ export class MochaRemoteServer extends Mocha {
           throw new Error(err);
         }
       }
-    }
+    };
 
     // Attach a listener to the run ending
     this.runner.once("end", () => {
       const failures = this.runner && this.runner.stats && this.runner.stats.failures || 0;
+      // Delete the runner to allow another run
+      delete this.runner;
+      // Stop the server if we should
+      if (this.config.stopAfterCompletion) {
+        this.stop();
+      }
+      // Call any callbacks to signal completion
       done(failures);
     });
 
