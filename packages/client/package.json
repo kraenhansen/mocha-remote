@@ -1,16 +1,11 @@
 {
   "name": "mocha-remote-client",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "prepack": "cp ../../README.md ."
   },
   "main": "dist/index.js",
-  "react-native": {
-    "dist/index.js": "./entries/react-native/index.js",
-    "mocha": "./entries/react-native/mocha.js",
-    "mocha/lib/reporters": "./entries/react-native/mocha-reporters.js"
-  },
   "react-native": "entries/react-native.js",
   "types": "dist/index.d.ts",
   "author": {
