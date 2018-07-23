@@ -1,0 +1,19 @@
+{
+  "name": "MochaRemoteExample",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "mocha": "^5.2.0",
+    "react": "16.4.1",
+    "react-native": "0.56.0"
+  },
+  "devDependencies": {
+    "babel-preset-react-native": "^5",
+    "react-test-renderer": "16.4.1",
+    "mocha-remote": "file://../../../../"
+  }
+}
