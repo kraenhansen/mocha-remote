@@ -64,6 +64,9 @@ export class MochaRemoteClient {
   }
 
   public connect(fn?: () => void) {
+    if (this.ws) {
+      throw new Error("Already connected");
+    }
     debug(`Connecting to ${this.config.url}`);
     this.ws = new WebSocket(this.config.url, "mocha-remote");
     this.ws.addEventListener("error", this.onError.bind(this, fn));

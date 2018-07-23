@@ -44,8 +44,6 @@ describe("mocha-remote-cli", () => {
       Object.apply(global, globalBefore);
       // Instrument the mocha instance
       client.instrument(mocha);
-      // Connect to the server - this will be reconnecting because the server is not running yet
-      client.connect();
     });
 
     afterEach(async () => {

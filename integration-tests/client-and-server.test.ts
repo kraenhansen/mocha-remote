@@ -39,7 +39,7 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
       });
     });
     // Create a client - which is supposed to run where the tests are running
-    client = new MochaRemoteClient({ url: server.getUrl() });
+    client = new MochaRemoteClient({ autoConnect: false, url: server.getUrl() });
     // Await the client connecting and the server emitting an event
     await Promise.all([
       serverConnection,
@@ -58,7 +58,6 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
 
     // Create a client - which is supposed to run where the tests are running
     client = new MochaRemoteClient({ url: server.getUrl() });
-    await client.connect();
     const mocha = new MockedMocha() as Mocha;
     // Let's instrument the mocha instance and resolve a promise when the tests start
     const clientRunningPromise = new Promise((resolve) => {
@@ -156,7 +155,6 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
             await server.start();
             // Create a client - which is supposed to run where the tests are running
             client = new MochaRemoteClient({ url: server.getUrl() });
-            await client.connect();
             // Instrument the mocha instance:
             // Overrides run() and tells the client to use this when aksed to run
             client.instrument(mocha);
