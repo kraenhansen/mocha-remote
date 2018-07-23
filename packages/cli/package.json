@@ -1,0 +1,35 @@
+{
+  "name": "mocha-remote-cli",
+  "version": "0.2.4",
+  "description": "Run Mocha tests somewhere - get reporting elsewhere",
+  "scripts": {
+    "prepack": "cp ../../README.md .",
+    "test": "mocha --opts configs/mocha.opt"
+  },
+  "main": "index.js",
+  "bin": {
+    "mocha-remote": "./lib/bin.js"
+  },
+  "author": {
+    "name": "Kræn Hansen",
+    "email": "mail@kraenhansen.dk",
+    "url": "https://github.com/kraenhansen"
+  },
+  "keywords": [
+    "mocha"
+  ],
+  "repository": "github:kraenhansen/mocha-remote",
+  "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^3.1.0",
+    "mocha-remote-server": "^0.2.4"
+  },
+  "devDependencies": {
+    "mocha-remote-server": "file://../server",
+    "mocha-remote-client": "file://../client"
+  },
+  "peerDependencies": {
+    "mocha": "^5"
+  }
+}
