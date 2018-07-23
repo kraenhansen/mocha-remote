@@ -18,14 +18,14 @@
   "repository": "github:kraenhansen/mocha-remote",
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
-  "devDependencies": {
-    "@types/chai": "^4.1.4",
-    "@types/debug": "0.0.30"
-  },
   "dependencies": {
     "debug": "^3.1.0",
     "flatted": "^0.2.3",
     "isomorphic-ws": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/debug": "0.0.30"
   },
   "peerDependencies": {
     "mocha": "^5"
