@@ -26,7 +26,7 @@ This will probably be an example app in a particular environment from which you 
 npm install mocha-remote-client --save
 ```
 
-Create an instance of the client, instrument an instance of Mocha and connect to the server:
+Create an instance of the client, instrument an instance of Mocha.
 
 ```
 // Import if the platform supports it
@@ -37,20 +37,38 @@ const { MochaRemoteClient } = require("mocha-remote-client");
 // 1. Create an instance of the client
 const client = new MochaRemoteClient();
 
-// 2. Create an instance of Mocha and instrument it
+// 2. Create an instance of Mocha, add test files and instrument the instance
 const mocha = new Mocha();
-client.instrument(mocha);
-
-// Add your test files
 mocha.addFile("./test.js");
-
-// 3. Ask the client to connect
-client.connect(() => {
-  console.log("Connected! Waiting for the server to start the test ...");
-});
+client.instrument(mocha);
 ```
 
-## Installing the server
+The client automatically (re)connects to the server.
+
+## Installing the server (as a CLI)
+
+Install the Mocha Remote CLI into your project. It is a drop-in replacement for mocha, in fact its simply extending the
+Mocha CLI already available in the project.
+
+```
+npm install mocha mocha-remote-cli --save-dev
+```
+
+Run the server CLI from your terminal
+
+```
+./node_modules/.bin/mocha-remote src/*.test.js
+```
+
+or even better, add it as a test script in your projects package.json
+
+```
+"scripts": {
+  "test": "mocha-remote src/*.test.js"
+}
+```
+
+## Installing the server (for a programatic API)
 
 Install the server in the package from where you want reporting, probably a simple JavaScript run by Node.js.
 
@@ -67,7 +85,8 @@ import { MochaRemoteServer } from "mocha-remote-server";
 const { MochaRemoteServer } = require("mocha-remote-server");
 
 // 1. Create an instance of the server
-const server = new MochaRemoteServer();
+const server = new MochaRemoteServer({}, { autoStart: false });
+
 // 2. Start the server
 server.start().then(() => {
   console.log(`Mocha Remote server is listening on ${server.getUrl()}`);
