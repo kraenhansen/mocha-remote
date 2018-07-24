@@ -8,7 +8,7 @@
     "test/ios": "react-native run-ios && mocha-remote -w test/*.test.js"
   },
   "dependencies": {
-    "mocha-remote-client": "^0.5.2",
+    "mocha-remote-client": "file:../../../../packages/client/mocha-remote-client-0.6.0.tgz",
     "node-libs-react-native": "^1.0.2",
     "react": "16.4.1",
     "react-native": "0.56.0"

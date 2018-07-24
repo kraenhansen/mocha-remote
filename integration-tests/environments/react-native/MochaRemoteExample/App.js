@@ -20,6 +20,12 @@ export default class App extends Component<Props> {
     this.prepareTests();
   }
 
+  componentWillUnmount() {
+    if (this.client) {
+      this.client.disconnect();
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
@@ -51,33 +57,34 @@ export default class App extends Component<Props> {
   }
 
   prepareTests() {
-    MochaRemoteClient.setup({
-      id: Platform.OS,
-    }, (mocha) => {
-      // Set the title of the root suite
-      mocha.suite.title = `React-Native on ${Platform.OS}`;
-      // This will setup the mocha globals (describe, it, etc.)
-      mocha.suite.emit("pre-require", global, null, mocha);
-      // Require tests
-      require("./test/simple.test.js");
-    }, (runner) => {
-      runner.on("test", (test) => {
-          // Compute the current test index - incrementing it if we're running
-          const currentTestIndex =
-            this.state.status === "running"
-            ? this.state.currentTestIndex + 1
-            : 0;
-          // Set the state to update the UI
-          this.setState({
-            status: "running",
-            currentTest: test.fullTitle(),
-            currentTestIndex,
-            totalTests: runner.total,
-          });
-      });
-      runner.on("end", () => {
-          this.setState({ status: "ended" });
-      });
+    this.client = new MochaRemoteClient({
+      whenInstrumented: (mocha) => {
+        // Set the title of the root suite
+        mocha.suite.title = `React-Native on ${Platform.OS}`;
+        // This will setup the mocha globals (describe, it, etc.)
+        mocha.suite.emit("pre-require", global, null, mocha);
+        // Require tests
+        require("./test/simple.test.js");
+      },
+      whenRunning: (runner) => {
+        runner.on("test", (test) => {
+            // Compute the current test index - incrementing it if we're running
+            const currentTestIndex =
+              this.state.status === "running"
+              ? this.state.currentTestIndex + 1
+              : 0;
+            // Set the state to update the UI
+            this.setState({
+              status: "running",
+              currentTest: test.fullTitle(),
+              currentTestIndex,
+              totalTests: runner.total,
+            });
+        });
+        runner.on("end", () => {
+            this.setState({ status: "ended" });
+        });
+      },
     });
   }
 }

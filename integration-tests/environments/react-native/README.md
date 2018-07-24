@@ -30,26 +30,26 @@ This ships with Mocha in its react-native bundle.
 import { MochaRemoteClient } from "mocha-remote-client";
 ```
 
-Then create an instance of Mocha, require in any tests, create a mocha remote client and use that to instrument the
-mocha instance.
+Then create a mocha remote client - when the server asks the client to create a new Mocha instance the
+`whenInstrumented` callback provided in the config will be called. Setup the globals and require the tests there.
 
 ```
-// 1. Create an instance of Mocha
-const mocha = new MochaRemoteClient.Mocha();
-// Set the title of the root suite
-mocha.suite.title = `React-Native on ${Platform.OS}`;
-
-// 2. Prepare the global object and require tests
-// The next line is needed because we're by-passing mocha.addFile
-mocha.suite.emit("pre-require", global, null, mocha);
-require("./test/simple.test.js");
-
-// 3. Create a client and instrument the mocha instance
-const client = new MochaRemoteClient();
-client.instrument(mocha);
+const client = new MochaRemoteClient({
+  whenInstrumented: (mocha) => {
+    // Set the title of the root suite
+    mocha.suite.title = `React-Native on ${Platform.OS}`;
+    // This will setup the mocha globals (describe, it, etc.)
+    mocha.suite.emit("pre-require", global, null, mocha);
+    // Require tests
+    require("./test/simple.test.js");
+  },
+  whenRunning: (runner) => {
+    console.log("Server started the tests ...");
+  },
+});
 ```
 
-The client automatically connects to the Mocha remote server on its default port which starts running the tests.
+The client automatically connects to the Mocha remote server on its default port (8090) and starts running the tests.
 
 ## Setting up the server
 
