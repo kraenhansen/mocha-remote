@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "start": "react-native start",
-    "test": "react-native run-android && mocha-remote test/*.test.js"
+    "test/android": "react-native run-android && mocha-remote test/*.test.js",
+    "test/ios": "react-native run-ios && mocha-remote -w test/*.test.js"
   },
   "dependencies": {
-    "mocha-remote-client": "^0.4.0",
+    "mocha-remote-client": "^0.5.1",
     "node-libs-react-native": "^1.0.2",
     "react": "16.4.1",
     "react-native": "0.56.0"
@@ -15,7 +16,7 @@
   "devDependencies": {
     "babel-preset-react-native": "^5",
     "mocha": "^5.2.0",
-    "mocha-remote-cli": "^0.4.0",
+    "mocha-remote-cli": "^0.5.1",
     "react-test-renderer": "16.4.1"
   }
 }
