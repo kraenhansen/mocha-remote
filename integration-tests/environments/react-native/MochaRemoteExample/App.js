@@ -11,7 +11,6 @@ import React, { Component } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { MochaRemoteClient } from "mocha-remote-client";
-import Mocha from "mocha/lib/mocha";
 
 type Props = {};
 export default class App extends Component<Props> {
@@ -52,34 +51,33 @@ export default class App extends Component<Props> {
   }
 
   prepareTests() {
-    // 1. Create an instance of Mocha
-    const mocha = new Mocha();
-    // Set the title of the root suite
-    mocha.suite.title = `React-Native on ${Platform.OS}`;
-
-    // 2. Require any tests
-    require("./test/simple.test.js");
-
-    // 3. Create a client and instrument the mocha instance
-    const client = new MochaRemoteClient();
-    client.instrument(mocha, (runner) => {
-        runner.on("test", (test) => {
-            // Compute the current test index - incrementing it if we're running
-            const currentTestIndex =
-              this.state.status === "running"
-              ? this.state.currentTestIndex + 1
-              : 0;
-            // Set the state to update the UI
-            this.setState({
-              status: "running",
-              currentTest: test.fullTitle(),
-              currentTestIndex,
-              totalTests: runner.total,
-            });
-        });
-        runner.on("end", () => {
-            this.setState({ status: "ended" });
-        });
+    MochaRemoteClient.setup({
+      id: Platform.OS,
+    }, (mocha) => {
+      // Set the title of the root suite
+      mocha.suite.title = `React-Native on ${Platform.OS}`;
+      // This will setup the mocha globals (describe, it, etc.)
+      mocha.suite.emit("pre-require", global, null, mocha);
+      // Require tests
+      require("./test/simple.test.js");
+    }, (runner) => {
+      runner.on("test", (test) => {
+          // Compute the current test index - incrementing it if we're running
+          const currentTestIndex =
+            this.state.status === "running"
+            ? this.state.currentTestIndex + 1
+            : 0;
+          // Set the state to update the UI
+          this.setState({
+            status: "running",
+            currentTest: test.fullTitle(),
+            currentTestIndex,
+            totalTests: runner.total,
+          });
+      });
+      runner.on("end", () => {
+          this.setState({ status: "ended" });
+      });
     });
   }
 }

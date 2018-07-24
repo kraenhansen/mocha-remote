@@ -30,15 +30,16 @@ export interface IMochaRemoteServerConfig {
   stopAfterCompletion: boolean;
 }
 
-export const DEFAULT_CONFIG: IMochaRemoteServerConfig = {
-  autoStart: true,
-  callbacks: {},
-  host: "127.0.0.1",
-  port: 8090,
-  stopAfterCompletion: false,
-};
-
 export class MochaRemoteServer extends Mocha {
+
+  public static DEFAULT_CONFIG: IMochaRemoteServerConfig = {
+    autoStart: true,
+    callbacks: {},
+    host: "127.0.0.1",
+    port: 8090,
+    stopAfterCompletion: false,
+  };
+
   private config: IMochaRemoteServerConfig;
   private wss?: WebSocket.Server;
   private client?: WebSocket;
@@ -49,7 +50,7 @@ export class MochaRemoteServer extends Mocha {
     config: Partial<IMochaRemoteServerConfig> = {},
   ) {
     super(mochaOptions);
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...MochaRemoteServer.DEFAULT_CONFIG, ...config };
   }
 
   public start() {
@@ -94,7 +95,6 @@ export class MochaRemoteServer extends Mocha {
       if (this.config.callbacks.serverStarted) {
         this.config.callbacks.serverStarted(this);
       }
-      // If a timeout is set - close the server if no
     });
   }
 

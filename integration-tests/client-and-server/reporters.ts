@@ -5,11 +5,9 @@ import * as path from "path";
 import { MochaRemoteClient } from "mocha-remote-client/src";
 import { MochaRemoteServer } from "mocha-remote-server/src";
 
-import { MockedMocha } from "./mocked-mocha";
-import * as ob from "./output-buffering";
-import { removeTimings } from "./utils";
+import { ob, removeTimings } from "../utils";
 
-describe("MochaRemoteClient & MochaRemoteServer", () => {
+describe("reporters", () => {
   let server: MochaRemoteServer;
   let client: MochaRemoteClient;
 
@@ -22,65 +20,8 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
     }
   });
 
-  it("starts on 8090", async () => {
-    // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer();
-    await server.start();
-    expect(server.getUrl()).to.equal("ws://127.0.0.1:8090");
-  });
-
-  it("connects", async () => {
-    // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer({}, { port: 0 });
-    await server.start();
-    const serverConnection = new Promise((resolve) => {
-      (server as any).wss.once("connection", () => {
-        resolve();
-      });
-    });
-    // Create a client - which is supposed to run where the tests are running
-    client = new MochaRemoteClient({ autoConnect: false, url: server.getUrl() });
-    // Await the client connecting and the server emitting an event
-    await Promise.all([
-      serverConnection,
-      new Promise((resolve) => client.connect(resolve)),
-    ]);
-  });
-
-  it("can start client from the server", async () => {
-    // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer({
-      reporter: "base", /* to prevent output */
-    }, {
-      port: 0,
-    });
-    await server.start();
-
-    // Create a client - which is supposed to run where the tests are running
-    client = new MochaRemoteClient({ url: server.getUrl() });
-    const mocha = new MockedMocha() as Mocha;
-    // Let's instrument the mocha instance and resolve a promise when the tests start
-    const clientRunningPromise = new Promise((resolve) => {
-      client.instrument(mocha, (runner) => {
-        // TODO: Check that its an instance of Mocha.Runner?
-        expect(runner).to.be.an("object");
-        resolve();
-      });
-    });
-
-    await new Promise((resolve) => {
-      // Asking the server to start the run
-      server.run((failures) => {
-        expect(failures).to.equal(0);
-        resolve();
-      });
-    });
-
-    await clientRunningPromise;
-  });
-
   describe("running a Mocha test suite", () => {
-    const sampleTestPath = path.resolve(__dirname, "sample.test.js");
+    const sampleTestPath = path.resolve(__dirname, "../sample.test.js");
 
     /*
      * dot - dot matrix
@@ -141,9 +82,8 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
             mocha.reporter(reporter);
             // Run and await completion
             mocha.run((failures) => {
-              ob.disable();
-              expect(failures).to.equal(1);
               regularOutput = output().toString("utf8");
+              expect(failures).to.equal(1);
               done();
             });
           });
@@ -165,9 +105,8 @@ describe("MochaRemoteClient & MochaRemoteServer", () => {
             await new Promise((resolve) => {
               // We're asking the server to start
               server.run((failures) => {
-                ob.disable();
-                expect(failures).to.equal(1);
                 remoteOutput = output().toString("utf8");
+                expect(failures).to.equal(1);
                 resolve();
               });
             });

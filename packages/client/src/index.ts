@@ -8,11 +8,12 @@ interface IEventMessage {
   args: any[];
 }
 
+export type RunCallback = (runner: Mocha.Runner) => void;
+
 interface IInstrumentedMocha extends Mocha {
   originalRun: (fn?: (failures: number) => void) => Mocha.Runner;
+  onRun?: RunCallback;
 }
-
-export type RunCallback = (runner: Mocha.Runner) => void;
 
 const debug = Debug("mocha-remote:client");
 
@@ -24,14 +25,15 @@ export interface IMochaRemoteClientConfig {
   retryDelay: number;
   /** The websocket URL of the server, ex: ws://localhost:8090 */
   url: string;
+  /** Called when the client has a new instrumented mocha instance */
+  whenInstrumented?: (mocha: Mocha) => void;
+  /** Called when the server has decided to start running */
+  whenRunning?: (runner: Mocha.Runner) => void;
+  /** Called when the client needs a new Mocha instance */
+  createMocha: (config: IMochaRemoteClientConfig) => Mocha;
+  /** These options are passed to the Mocha constructor when creating a new instance */
+  mochaOptions: Mocha.MochaOptions;
 }
-
-export const DEFAULT_CONFIG: IMochaRemoteClientConfig = {
-  autoConnect: true,
-  autoRetry: true,
-  retryDelay: 500,
-  url: "ws://localhost:8090",
-};
 
 const MOCHA_EVENT_NAMES = [
   "start", // `start`  execution started
@@ -49,14 +51,22 @@ const MOCHA_EVENT_NAMES = [
 
 export class MochaRemoteClient {
   public static Mocha = Mocha;
+  public static DEFAULT_CONFIG: IMochaRemoteClientConfig = {
+    autoConnect: true,
+    autoRetry: true,
+    createMocha: (config) => new Mocha(config.mochaOptions),
+    mochaOptions: {},
+    retryDelay: 500,
+    url: "ws://localhost:8090",
+  };
+
   private config: IMochaRemoteClientConfig;
   private ws?: WebSocket;
-  private mocha?: IInstrumentedMocha;
-  private runCallback?: RunCallback;
+  private nextMocha?: IInstrumentedMocha;
   private retryTimeout?: number;
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = { ...MochaRemoteClient.DEFAULT_CONFIG, ...config };
     if (typeof(WebSocket) === "undefined") {
       throw new Error("mocha-remote-client expects a global WebSocket");
     } else if (this.config.autoConnect) {
@@ -91,31 +101,51 @@ export class MochaRemoteClient {
     }
   }
 
-  public instrument(mocha: Mocha, runCallback?: RunCallback) {
-    this.mocha = mocha as IInstrumentedMocha;
-    this.runCallback = runCallback;
+  public instrument(mocha: Mocha) {
+    const instrumentedMocha = mocha as IInstrumentedMocha;
     // Monkey patch the run method
-    this.mocha.originalRun = mocha.run;
-    mocha.run = () => {
+    instrumentedMocha.originalRun = mocha.run;
+    instrumentedMocha.run = () => {
       throw new Error("This Mocha instance is instrumented by mocha-remote-client, use the server to run tests");
     };
     // The reporter method might require files that do not exist when required from a bundle
-    mocha.reporter = () => {
+    instrumentedMocha.reporter = () => {
       // tslint:disable-next-line:no-console
       console.warn("This Mocha instance is instrumented by mocha-remote-client, setting a reporter has no effect");
-      return mocha;
+      return instrumentedMocha;
     };
+    // Notify that a Mocha instance is now instrumented
+    if (this.config.whenInstrumented) {
+      this.config.whenInstrumented(instrumentedMocha);
+    }
+    // Hang on to this instance
+    this.nextMocha = instrumentedMocha;
+    // Add this to the list of instrumented mochas
+    return instrumentedMocha;
   }
 
-  public run() {
-    if (this.mocha) {
-      // Monkey patch the reporter to a method before running
-      const reporter = this.createReporter();
-      (this.mocha as any)._reporter = reporter;
-      // Call the original run method
-      return this.mocha.originalRun();
+  public run(mocha: IInstrumentedMocha): Mocha.Runner {
+    // Monkey patch the reporter to a method before running
+    const reporter = this.createReporter();
+    (mocha as any)._reporter = reporter;
+    // Call the original run method
+    const runner = mocha.originalRun();
+    // Signal that the mocha instance is now running
+    if (this.config.whenRunning) {
+      this.config.whenRunning(runner);
+    }
+    // Return the runner
+    return runner;
+  }
+
+  public getMocha(): IInstrumentedMocha {
+    if (this.nextMocha) {
+      // Use the latest instrumented mocha instance - if it exists
+      return this.nextMocha;
     } else {
-      throw new Error("A mocha instance must be instrumented before running");
+      // Create a new Mocha instance
+      const mocha = this.config.createMocha(this.config);
+      return this.instrument(mocha);
     }
   }
 
@@ -150,11 +180,9 @@ export class MochaRemoteClient {
     debug(`Received a '${data.eventName}' message`);
     if (data.eventName === "run") {
       // TODO: Receive runtime options from the server and set these on the instrumented mocha instance before running
-      const runner = this.run();
-      // If the user that instrumented the mocha instance wants a callback called - we'll do that
-      if (this.runCallback) {
-        this.runCallback(runner);
-      }
+      const mocha = this.getMocha();
+      delete this.nextMocha;
+      this.run(mocha);
     }
   }
 
@@ -165,6 +193,7 @@ export class MochaRemoteClient {
       debug(`Failed connecting to server (retrying in ${delay}ms): ${err.message}`);
       if (shouldReconnect) {
         this.retryTimeout = setTimeout(() => {
+          this.disconnect();
           this.connect(fn);
         }, this.config.retryDelay) as any as number;
       } else {
@@ -198,6 +227,8 @@ export class MochaRemoteClient {
     } else if (err.message.indexOf("unexpected end of stream") >= 0) {
       return true;
     } else if (err.message.indexOf("Connection reset") >= 0) {
+      return true;
+    } else if (err.message.indexOf("Failed to connect to") >= 0) {
       return true;
     } else {
       return false;

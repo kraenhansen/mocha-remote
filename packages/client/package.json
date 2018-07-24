@@ -8,7 +8,7 @@
     "build/node": "tsc -p config/tsconfig.node.json"
   },
   "main": "dist/node/index.js",
-  "react-native": "entries/react-native.js",
+  "react-native": "dist/bundled/react-native.bundle.js",
   "types": "dist/node/index.d.ts",
   "author": {
     "name": "Kræn Hansen",

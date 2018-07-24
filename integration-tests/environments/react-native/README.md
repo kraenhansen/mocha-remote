@@ -17,32 +17,17 @@ Then initialize a new React Native project
 react-native init MyTestApplication
 ```
 
-Install Mocha, the mocha-remote-client and `node-libs-react-native` as a dependencies of your react native project
+Install Mocha, the mocha-remote-client a dependencies of your react native project
 
 ```
-npm install mocha mocha-remote-client node-libs-react-native --save
+npm install mocha-remote-client --save
 ```
 
-Follow the instructions on https://github.com/parshap/node-libs-react-native#usage-with-react-native-packager to get the
-node shims for react native properly installed - with an extra shim for fs:
-
-> Add a rn-cli.config.js file in the root directory of your React Native project and set extraNodeModules:
->
-> ```
-> // rn-cli.config.js
-> const extraNodeModules = require('node-libs-react-native');
-> extraNodeModules.fs = require.resolve("mocha-remote-client/entries/react-native/fs");
-> module.exports = {
->   extraNodeModules,
-> };
-> ```
-
-Import `Mocha` and the `MochaRemoteClient` into the app
+Import the `MochaRemoteClient` into the app.
+This ships with Mocha in its react-native bundle.
 
 ```
 import { MochaRemoteClient } from "mocha-remote-client";
-// Importing the node.js version of Mocha to prevent polluting the global - this must happen after importing the client.
-import Mocha from "mocha/lib/mocha";
 ```
 
 Then create an instance of Mocha, require in any tests, create a mocha remote client and use that to instrument the
@@ -50,11 +35,13 @@ mocha instance.
 
 ```
 // 1. Create an instance of Mocha
-const mocha = new Mocha();
+const mocha = new MochaRemoteClient.Mocha();
 // Set the title of the root suite
 mocha.suite.title = `React-Native on ${Platform.OS}`;
 
-// 2. Require any tests
+// 2. Prepare the global object and require tests
+// The next line is needed because we're by-passing mocha.addFile
+mocha.suite.emit("pre-require", global, null, mocha);
 require("./test/simple.test.js");
 
 // 3. Create a client and instrument the mocha instance
@@ -63,6 +50,14 @@ client.instrument(mocha);
 ```
 
 The client automatically connects to the Mocha remote server on its default port which starts running the tests.
+
+## Setting up the server
+
+First install mocha and the mocha-remote-cli.
+
+```
+npm install mocha mocha-remote-cli --save
+```
 
 ## Specifically for Android
 

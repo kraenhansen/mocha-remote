@@ -16,13 +16,15 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js"],
     alias: {
       mocha: require.resolve("mocha/lib/mocha"),
-      fs: resolve(__dirname, "../src/fs-shim.js"),
     }
   },
   module: {
     rules: [
       { test: /\.tsx?$/, loader: "ts-loader" }
     ]
+  },
+  node: {
+    fs: "empty",
   },
   plugins: [
     new ContextReplacementPlugin(/node_modules\/mocha\/lib$/, (context) => {
