@@ -12,6 +12,10 @@ I wanted to run a single Mocha test suite across multiple environments (Node.js,
 no changes to the test suite. I found that running the Mocha tests inside the Electron on React-Native apps, it was
 difficult to control it, start / stop external services and get reporting on which tests pass or fail.
 
+If you only need to run your tests in browser, [the Karma test runner](https://karma-runner.github.io/) could be a good
+alternative to this package. But if you're developing a library that must work in other JavaScript environments, such as
+React Native, I haven't found any other alternatives.
+
 ## Please Note: This is very early-stage
 
 I just created this - I would appreciate a shout out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you
