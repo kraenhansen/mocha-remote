@@ -3,11 +3,13 @@
   "version": "0.5.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
-    "prepack": "cp ../../README.md ."
+    "prepack": "cp ../../README.md .",
+    "build/webpack": "webpack --config config/webpack.js",
+    "build/node": "tsc -p config/tsconfig.node.json"
   },
-  "main": "dist/index.js",
+  "main": "dist/node/index.js",
   "react-native": "entries/react-native.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/node/index.d.ts",
   "author": {
     "name": "Kræn Hansen",
     "email": "mail@kraenhansen.dk",
@@ -26,7 +28,9 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.4",
-    "@types/debug": "0.0.30"
+    "@types/debug": "0.0.30",
+    "webpack": "^4.16.2",
+    "webpack-cli": "^3.1.0"
   },
   "peerDependencies": {
     "mocha": "^5"

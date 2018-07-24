@@ -7,7 +7,7 @@
     "cli/package": "cd packages/cli; npm pack",
     "cli/publish": "cd packages/cli; npm publish",
     "client/install": "cd packages/client; npm install",
-    "client/build": "cd packages/client; tsc -p tsconfig.json",
+    "client/build": "cd packages/client; npm run build/node && npm run build/webpack",
     "client/package": "cd packages/client; npm pack",
     "client/publish": "cd packages/client; npm publish",
     "server/install": "cd packages/server; npm install",

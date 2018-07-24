@@ -3,9 +3,9 @@
     "target": "es5",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "./dist",
     "removeComments": true,
     "strict": true,
+    "outDir": ".",
 
     "noUnusedLocals": true,
     "noImplicitReturns": true,

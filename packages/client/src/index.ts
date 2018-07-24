@@ -48,6 +48,7 @@ const MOCHA_EVENT_NAMES = [
 ];
 
 export class MochaRemoteClient {
+  public static Mocha = Mocha;
   private config: IMochaRemoteClientConfig;
   private ws?: WebSocket;
   private mocha?: IInstrumentedMocha;
@@ -96,7 +97,13 @@ export class MochaRemoteClient {
     // Monkey patch the run method
     this.mocha.originalRun = mocha.run;
     mocha.run = () => {
-      throw new Error("This Mocha instance has been instrumented by the mocha-remote client, call run on the server");
+      throw new Error("This Mocha instance is instrumented by mocha-remote-client, use the server to run tests");
+    };
+    // The reporter method might require files that do not exist when required from a bundle
+    mocha.reporter = () => {
+      // tslint:disable-next-line:no-console
+      console.warn("This Mocha instance is instrumented by mocha-remote-client, setting a reporter has no effect");
+      return mocha;
     };
   }
 
