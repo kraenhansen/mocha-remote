@@ -64,7 +64,7 @@ export class MochaRemoteClient {
 
   private config: IMochaRemoteClientConfig;
   private ws?: WebSocket;
-  private nextMocha?: IInstrumentedMocha;
+  private instrumentedMocha?: IInstrumentedMocha;
   private retryTimeout?: number;
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
@@ -121,6 +121,8 @@ export class MochaRemoteClient {
 
   public instrument(mocha: Mocha) {
     const instrumentedMocha = mocha as IInstrumentedMocha;
+    // Hang on to this instance
+    this.instrumentedMocha = instrumentedMocha;
     // Monkey patch the run method
     instrumentedMocha.originalRun = mocha.run;
     instrumentedMocha.run = () => {
@@ -136,8 +138,6 @@ export class MochaRemoteClient {
     if (this.config.whenInstrumented) {
       this.config.whenInstrumented(instrumentedMocha);
     }
-    // Hang on to this instance
-    this.nextMocha = instrumentedMocha;
     // Add this to the list of instrumented mochas
     return instrumentedMocha;
   }
@@ -157,9 +157,9 @@ export class MochaRemoteClient {
   }
 
   public getMocha(): IInstrumentedMocha {
-    if (this.nextMocha) {
+    if (this.instrumentedMocha) {
       // Use the latest instrumented mocha instance - if it exists
-      return this.nextMocha;
+      return this.instrumentedMocha;
     } else {
       // Create a new Mocha instance
       const mocha = this.config.createMocha(this.config);
@@ -208,7 +208,7 @@ export class MochaRemoteClient {
   }
 
   private onError = ({ error }: { error: Error }) => {
-    debug(`WebSocket error: ${error.message || "No message"}`);
+    debug(`WebSocket error: ${error ? error.message || "No message" : "No specific error"}`);
   }
 
   private onMessage = (event: { data: string }) => {
@@ -217,7 +217,7 @@ export class MochaRemoteClient {
     if (data.eventName === "run") {
       // TODO: Receive runtime options from the server and set these on the instrumented mocha instance before running
       const mocha = this.getMocha();
-      delete this.nextMocha;
+      delete this.instrumentedMocha;
       this.run(mocha);
     }
   }

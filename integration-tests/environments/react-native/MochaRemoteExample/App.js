@@ -13,7 +13,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { MochaRemoteClient } from "mocha-remote-client";
 
 type Props = {};
-export default class App extends Component<Props> {
+export class App extends Component<Props> {
   state = { status: "waiting" };
 
   componentDidMount() {
@@ -61,8 +61,6 @@ export default class App extends Component<Props> {
       whenInstrumented: (mocha) => {
         // Set the title of the root suite
         mocha.suite.title = `React-Native on ${Platform.OS}`;
-        // This will setup the mocha globals (describe, it, etc.)
-        mocha.suite.emit("pre-require", global, null, mocha);
         // Require tests
         require("./test/simple.test.js");
       },
