@@ -56,7 +56,12 @@ describe("basic", () => {
     // Let's instrument the mocha instance and resolve a promise when the tests start
     const clientRunningPromise = new Promise((resolve) => {
       // Create a client - which is supposed to run where the tests are running
-      client = new MochaRemoteClient({ url: server.getUrl(), whenRunning: resolve });
+      client = new MochaRemoteClient({
+        url: server.getUrl(),
+        whenRunning: (runner) => {
+          runner.once("end", resolve);
+        },
+      });
       const mocha = new MockedMocha() as Mocha;
       client.instrument(mocha);
     });
