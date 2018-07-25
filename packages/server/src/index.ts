@@ -103,6 +103,9 @@ export class MochaRemoteServer extends Mocha {
     return new Promise((resolve, reject) => {
       if (this.wss) {
         this.wss.close((err) => {
+          // Forget about the server
+          delete this.wss;
+          // Reject or resolve the promise
           if (err) {
             reject(err);
           } else {
@@ -110,8 +113,7 @@ export class MochaRemoteServer extends Mocha {
           }
         });
       } else {
-        const err = new Error("The server is not running");
-        reject(err);
+        resolve();
       }
     }).then(() => {
       debug("Server was stopped");
@@ -137,13 +139,6 @@ export class MochaRemoteServer extends Mocha {
     // this.runner = new Mocha.Runner(this.suite, this.options.delay || false);
     // TODO: Stub this to match the Runner's interface
     this.runner = new EventEmitter() as Mocha.Runner;
-    // If we already have a client, tell it to run
-    if (this.client) {
-      // TODO: Send runtime options to the client
-      this.send("run");
-    } else if (this.config.callbacks.waitingForClient) {
-      this.config.callbacks.waitingForClient();
-    }
 
     // We need to access the private _reporter field
     const Reporter = (this as any)._reporter;
@@ -176,6 +171,14 @@ export class MochaRemoteServer extends Mocha {
       // Call any callbacks to signal completion
       done(failures);
     });
+
+    // If we already have a client, tell it to run
+    if (this.client && this.client.readyState === WebSocket.OPEN) {
+      // TODO: Send runtime options to the client
+      this.send("run");
+    } else if (this.config.callbacks.waitingForClient) {
+      this.config.callbacks.waitingForClient();
+    }
 
     // Return the runner
     return this.runner;

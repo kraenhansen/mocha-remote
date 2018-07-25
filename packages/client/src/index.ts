@@ -25,6 +25,8 @@ export interface IMochaRemoteClientConfig {
   retryDelay: number;
   /** The websocket URL of the server, ex: ws://localhost:8090 */
   url: string;
+  /** Called when the client gets connected to the server */
+  whenConnected?: (ws: WebSocket) => void;
   /** Called when the client has a new instrumented mocha instance */
   whenInstrumented?: (mocha: Mocha) => void;
   /** Called when the server has decided to start running */
@@ -78,12 +80,20 @@ export class MochaRemoteClient {
     if (this.ws) {
       throw new Error("Already connected");
     }
+    // Prevent a timeout from reconnecting
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
+    }
     debug(`Connecting to ${this.config.url}`);
     this.ws = new WebSocket(this.config.url, "mocha-remote");
-    this.ws.addEventListener("error", this.onError.bind(this, fn));
+    this.ws.addEventListener("close", this.onClose);
+    this.ws.addEventListener("error", this.onError as any);
     this.ws.addEventListener("message", this.onMessage);
-    this.ws.addEventListener("open", () => {
+    this.ws.addEventListener("open", (e) => {
       debug(`Connected to ${this.config.url}`);
+      if (this.config.whenConnected) {
+        this.config.whenConnected(e.target as WebSocket);
+      }
       if (fn) {
         fn();
       }
@@ -91,13 +101,21 @@ export class MochaRemoteClient {
   }
 
   public disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      debug(`Disconnected from server`);
-      delete this.ws;
-    }
+    // Prevent a timeout from reconnecting
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
+    }
+    if (this.ws) {
+      debug(`Disconnecting from server`);
+      // Stop listening for the closing events to prevent reconnecting
+      this.ws.removeEventListener("close", this.onClose);
+      this.ws.removeEventListener("error", this.onError as any);
+      this.ws.removeEventListener("message", this.onMessage);
+      this.ws.close();
+      // Forget about the WebSocket
+      delete this.ws;
+    } else {
+      debug(`Disconnecting from server`);
     }
   }
 
@@ -175,6 +193,24 @@ export class MochaRemoteClient {
     });
   }
 
+  private onClose = ({ code, reason }: { code: number, reason: string }) => {
+    debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
+    // Forget about the client
+    delete this.ws;
+    // Try reconnecting
+    if (code !== 1000 && this.config.autoRetry) {
+    // Try to reconnect
+      debug(`Re-connecting in ${this.config.retryDelay}ms`);
+      this.retryTimeout = setTimeout(() => {
+        this.connect();
+      }, this.config.retryDelay) as any as number;
+    }
+  }
+
+  private onError = ({ error }: { error: Error }) => {
+    debug(`WebSocket error: ${error.message || "No message"}`);
+  }
+
   private onMessage = (event: { data: string }) => {
     const data = JSON.parse(event.data) as IEventMessage;
     debug(`Received a '${data.eventName}' message`);
@@ -183,25 +219,6 @@ export class MochaRemoteClient {
       const mocha = this.getMocha();
       delete this.nextMocha;
       this.run(mocha);
-    }
-  }
-
-  private onError = (fn: () => void | undefined, err: Error) => {
-    const delay = this.config.retryDelay;
-    if (this.config.autoRetry) {
-      const shouldReconnect = this.shouldReconnect(err);
-      debug(`Failed connecting to server (retrying in ${delay}ms): ${err.message}`);
-      if (shouldReconnect) {
-        this.retryTimeout = setTimeout(() => {
-          this.disconnect();
-          this.connect(fn);
-        }, this.config.retryDelay) as any as number;
-      } else {
-        const message = err ? err.stack || err.message : "No message";
-        throw new Error(`Failed connecting to server: ${message}`);
-      }
-    } else {
-      throw new Error(`Failed connecting to server: ${err.stack}`);
     }
   }
 
@@ -217,22 +234,6 @@ export class MochaRemoteClient {
         });
       }
     };
-  }
-
-  private shouldReconnect(err: Error | null) {
-    if (!err || !err.message) {
-      return true;
-    } else if (err.message.indexOf("ECONNREFUSED") >= 0) {
-      return true;
-    } else if (err.message.indexOf("unexpected end of stream") >= 0) {
-      return true;
-    } else if (err.message.indexOf("Connection reset") >= 0) {
-      return true;
-    } else if (err.message.indexOf("Failed to connect to") >= 0) {
-      return true;
-    } else {
-      return false;
-    }
   }
 
 }

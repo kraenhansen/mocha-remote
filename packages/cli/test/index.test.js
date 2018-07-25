@@ -46,7 +46,7 @@ describe("mocha-remote-cli", () => {
       client.instrument(mocha);
     });
 
-    afterEach(async () => {
+    afterEach(() => {
       // Kill the process if its still running
       if (cli) {
         cli.kill("SIGINT");
@@ -56,8 +56,7 @@ describe("mocha-remote-cli", () => {
       }
     });
 
-    it("can output the result", function (done) {
-      this.timeout(5000);
+    it("can output the result", (done) => {
       let output = "";
       cli = cp.spawn(CLI_PATH, [ SAMPLE_TEST_PATH ]);
       // When the cli gives output, read it out ...
@@ -72,6 +71,7 @@ describe("mocha-remote-cli", () => {
           expect(output).to.contain("1 failing");
           done();
         } else {
+          console.log(output);
           const err = new Error(`Mocha cli closed unexpectedly (code = ${code})`);
           done(err);
         }
