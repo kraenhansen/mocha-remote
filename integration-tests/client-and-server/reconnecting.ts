@@ -58,7 +58,7 @@ describe("reconnecting client", () => {
 
     await new Promise((resolve) => {
       server.run((failures) => {
-        // expect(failures).to.equal(1);
+        expect(failures).to.equal(1);
         resolve();
       });
     });
@@ -73,7 +73,7 @@ describe("reconnecting client", () => {
     // Run again
     await new Promise((resolve) => {
       server.run((failures) => {
-        // expect(failures).to.equal(1);
+        expect(failures).to.equal(1);
         resolve();
       });
     });
