@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-client",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "prepack": "cp ../../README.md .",
