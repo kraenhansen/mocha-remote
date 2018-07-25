@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "cli/install": "cd packages/cli; npm install",

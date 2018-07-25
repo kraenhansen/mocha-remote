@@ -30,7 +30,7 @@ This will probably be an example app in a particular environment from which you 
 npm install mocha-remote-client --save
 ```
 
-Create an instance of the client, instrument an instance of Mocha.
+Create an instance of the client and add tests when a Mocha instance gets created and instrumented.
 
 ```
 // Import if the platform supports it
@@ -38,13 +38,13 @@ import { MochaRemoteClient } from "mocha-remote-client";
 // Alternatively use a CommonJS require (you need just one of these lines 🤓)
 const { MochaRemoteClient } = require("mocha-remote-client");
 
-// 1. Create an instance of the client
-const client = new MochaRemoteClient();
-
-// 2. Create an instance of Mocha, add test files and instrument the instance
-const mocha = new Mocha();
-mocha.addFile("./test.js");
-client.instrument(mocha);
+// Create a client, which will automatically connect to the server on the default port (8090)
+const client = new MochaRemoteClient({
+  // Called when the server asks the client to create a new Mocha instance
+  whenInstrumented: (mocha) => {
+    mocha.addFile("./test.js");
+  },
+});
 ```
 
 The client automatically (re)connects to the server.
