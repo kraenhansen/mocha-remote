@@ -40,6 +40,24 @@ export class MochaRemoteServer extends Mocha {
     stopAfterCompletion: false,
   };
 
+  /**
+   * Starts the server, asks the client to run and exits the process when completed
+   */
+  public static startRunExit(
+    mochaOptions: Mocha.MochaOptions = {},
+    config: Partial<IMochaRemoteServerConfig> = {},
+  ) {
+    // Ensure the server autostarts
+    const server = new MochaRemoteServer(mochaOptions, { ...config, autoStart: true });
+    server.run((failures) => {
+      if (failures === 0) {
+        process.exit(0);
+      } else {
+        process.exit(-1);
+      }
+    });
+  }
+
   private config: IMochaRemoteServerConfig;
   private wss?: WebSocket.Server;
   private client?: WebSocket;

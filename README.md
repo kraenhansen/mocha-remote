@@ -32,7 +32,7 @@ npm install mocha-remote-client --save
 
 Create an instance of the client and add tests when a Mocha instance gets created and instrumented.
 
-```
+```javascript
 // Import if the platform supports it
 import { MochaRemoteClient } from "mocha-remote-client";
 // Alternatively use a CommonJS require (you need just one of these lines 🤓)
@@ -82,7 +82,7 @@ npm install mocha-remote-server --save-dev
 
 Create an instance of the server, start it, start your client (somehow), run the tests remote and exit appropriately.
 
-```
+```javascript
 // Import if the platform supports it
 import { MochaRemoteServer } from "mocha-remote-server";
 // Alternatively use a CommonJS require (you need just one of these lines 🤓)
@@ -106,6 +106,17 @@ server.start().then(() => {
   console.error(`Failed to start the server: ${err.stack}`);
   process.exit(1);
 });
+```
+
+The `startRunExit` convenience method does exactly that, so you can just call:
+
+```javascript
+// Import if the platform supports it
+import { MochaRemoteServer } from "mocha-remote-server";
+// Alternatively use a CommonJS require (you need just one of these lines 🤓)
+const { MochaRemoteServer } = require("mocha-remote-server");
+// Start, run and exit when it completes remote
+MochaRemoteServer.startRunExit();
 ```
 
 ## Acknowledgements
