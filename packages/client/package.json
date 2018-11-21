@@ -8,6 +8,7 @@
     "build/node": "tsc -p config/tsconfig.node.json"
   },
   "main": "dist/node/index.js",
+  "browser": "dist/bundled/browser.bundle.js",
   "react-native": "dist/bundled/react-native.bundle.js",
   "types": "dist/node/index.d.ts",
   "author": {

@@ -7,6 +7,7 @@ module.exports = {
   mode: "production",
   entry: {
     main: "./src/index.ts",
+    browser: "./src/browser.js",
     "react-native": "./src/react-native.js"
   },
   output: {
