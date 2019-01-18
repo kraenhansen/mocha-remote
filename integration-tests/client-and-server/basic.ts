@@ -49,6 +49,7 @@ describe("basic", () => {
     server = new MochaRemoteServer({
       reporter: "base", /* to prevent output */
     }, {
+      id: "tests",
       port: 0,
     });
     await server.start();
@@ -57,6 +58,7 @@ describe("basic", () => {
     const clientRunningPromise = new Promise((resolve) => {
       // Create a client - which is supposed to run where the tests are running
       client = new MochaRemoteClient({
+        id: "tests",
         url: server.getUrl(),
         whenRunning: (runner) => {
           runner.once("end", resolve);
@@ -82,6 +84,11 @@ describe("basic", () => {
     server = new MochaRemoteServer({
       reporter: "base", /* to prevent output */
     }, {
+      callbacks: {
+        clientConnection: () => {
+          throw new Error("Client connected unexpectedly");
+        },
+      },
       id: "a-non-default-id",
       port: 0,
     });
