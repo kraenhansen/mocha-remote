@@ -8,6 +8,11 @@ interface IEventMessage {
   args: any[];
 }
 
+interface IDisconnectedParams {
+  code: number;
+  reason: string;
+}
+
 export type RunCallback = (runner: Mocha.Runner) => void;
 
 interface IInstrumentedMocha extends Mocha {
@@ -25,8 +30,12 @@ export interface IMochaRemoteClientConfig {
   retryDelay: number;
   /** The websocket URL of the server, ex: ws://localhost:8090 */
   url: string;
+  /** The ID which the server expects */
+  id?: string;
   /** Called when the client gets connected to the server */
   whenConnected?: (ws: WebSocket) => void;
+  /** Called when the client looses connection to the server */
+  whenDisconnected?: (params: IDisconnectedParams) => void;
   /** Called when the client has a new instrumented mocha instance */
   whenInstrumented?: (mocha: Mocha) => void;
   /** Called when the server has decided to start running */
@@ -57,6 +66,7 @@ export class MochaRemoteClient {
     autoConnect: true,
     autoRetry: true,
     createMocha: (config) => new Mocha(config.mochaOptions),
+    id: "default",
     mochaOptions: {},
     retryDelay: 500,
     url: "ws://localhost:8090",
@@ -85,7 +95,7 @@ export class MochaRemoteClient {
       clearTimeout(this.retryTimeout);
     }
     debug(`Connecting to ${this.config.url}`);
-    this.ws = new WebSocket(this.config.url, "mocha-remote");
+    this.ws = new WebSocket(this.config.url, `mocha-remote:${this.config.id}`);
     this.ws.addEventListener("close", this.onClose);
     this.ws.addEventListener("error", this.onError as any);
     this.ws.addEventListener("message", this.onMessage);
@@ -193,7 +203,7 @@ export class MochaRemoteClient {
     });
   }
 
-  private onClose = ({ code, reason }: { code: number, reason: string }) => {
+  private onClose = ({ code, reason }: IDisconnectedParams) => {
     debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
     // Forget about the client
     delete this.ws;
@@ -204,6 +214,9 @@ export class MochaRemoteClient {
       this.retryTimeout = setTimeout(() => {
         this.connect();
       }, this.config.retryDelay) as any as number;
+    }
+    if (this.config.whenDisconnected) {
+      this.config.whenDisconnected({ code, reason });
     }
   }
 

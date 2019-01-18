@@ -76,4 +76,27 @@ describe("basic", () => {
 
     await clientRunningPromise;
   });
+
+  it("disconnects the client if ids mismatch", async () => {
+    // Create a server - which is supposed to run in Node
+    server = new MochaRemoteServer({
+      reporter: "base", /* to prevent output */
+    }, {
+      id: "a-non-default-id",
+      port: 0,
+    });
+    await server.start();
+    // Let's instrument the mocha instance and resolve a promise when the tests start
+    await new Promise((resolve) => {
+      // Create a client - which is supposed to run where the tests are running
+      client = new MochaRemoteClient({
+        url: server.getUrl(),
+        whenDisconnected: ({ code, reason }) => {
+          expect(code).to.equal(1002);
+          expect(reason).to.equal("Expected a different protocol (mocha-remote:a-non-default-id)");
+          resolve();
+        },
+      });
+    });
+  });
 });

@@ -28,6 +28,8 @@ export interface IMochaRemoteServerConfig {
   host: string;
   port: number;
   stopAfterCompletion: boolean;
+  /** An ID expected by the clients connecting */
+  id: string;
 }
 
 export class MochaRemoteServer extends Mocha {
@@ -36,6 +38,7 @@ export class MochaRemoteServer extends Mocha {
     autoStart: true,
     callbacks: {},
     host: "127.0.0.1",
+    id: "default",
     port: 8090,
     stopAfterCompletion: false,
   };
@@ -93,6 +96,12 @@ export class MochaRemoteServer extends Mocha {
       // When a client connects
       this.wss.on("connection", (ws) => {
         debug("Client connected");
+        // Check that the protocol matches
+        const expectedProtocol = `mocha-remote:${this.config.id}`;
+        if (ws.protocol !== expectedProtocol) {
+          // Protocol mismatch
+          ws.close(1002, `Expected a different protocol (${expectedProtocol})`);
+        }
         if (this.client) {
           debug("A client was already connected");
           this.client.removeAllListeners();
