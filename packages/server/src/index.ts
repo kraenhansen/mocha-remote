@@ -170,7 +170,8 @@ export class MochaRemoteServer extends Mocha {
 
     // We need to access the private _reporter field
     const Reporter = (this as any)._reporter;
-    const reporter = new Reporter(this.runner, this.options.reporterOptions);
+    // When constructing the Reporter we need to (unintuitively) pass all options, not the `options.reporterOptions`
+    const reporter = new Reporter(this.runner, this.options);
 
     const done = (failures: number) => {
       debug("Server ended testing");
