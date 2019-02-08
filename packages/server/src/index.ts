@@ -37,7 +37,7 @@ export class MochaRemoteServer extends Mocha {
   public static DEFAULT_CONFIG: IMochaRemoteServerConfig = {
     autoStart: true,
     callbacks: {},
-    host: "127.0.0.1",
+    host: "0.0.0.0",
     id: "default",
     port: 8090,
     stopAfterCompletion: false,
