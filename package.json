@@ -19,7 +19,7 @@
     "build": "npm run client/build && npm run server/build",
     "package": "npm run cli/package && npm run client/package && npm run server/package",
     "version": "node scripts/update-versions.js && git add packages/*/package*.json",
-    "postversion": "git push --tags",
+    "postversion": "git push && git push --tags",
     "postinstall": "node scripts/postinstall.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run client/install; npm run server/install",
