@@ -18,7 +18,7 @@
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "npm run client/build && npm run server/build",
     "package": "npm run cli/package && npm run client/package && npm run server/package",
-    "postversion": "node scripts/update-versions.js",
+    "version": "node scripts/update-versions.js && git add packages/*/package*.json",
     "postinstall": "node scripts/postinstall.js",
     "prepublishOnly": "npm run build",
     "prepare": "npm run client/install; npm run server/install",
