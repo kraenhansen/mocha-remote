@@ -30,7 +30,7 @@ program
   .option('-P, --port [port]', 'specify the port that the Mocha Remote Server will listen to', '8090')
   .option('-I, --id [port]', 'specify the id the clients will use to connect', 'default');
 
-program._name = 'mocha';
+program._name = 'mocha-remote';
 
 program.parse(process.argv);
 
@@ -93,7 +93,7 @@ async function startServerAndRun() {
   });
 
   // Start the runner
-  await new Promise(resolve => mocha.run(resolve));
+  return new Promise(resolve => mocha.run(resolve));
 }
 
 startServerAndRun().then((failures) => {

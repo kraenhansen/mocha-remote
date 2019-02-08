@@ -6,9 +6,8 @@
     "prepack": "cp ../../README.md .",
     "test": "mocha --opts configs/mocha.opt"
   },
-  "main": "index.js",
   "bin": {
-    "mocha-remote": "./bin/mocha-remote.js"
+    "mocha-remote": "./bin/mocha-remote"
   },
   "author": {
     "name": "Kræn Hansen",

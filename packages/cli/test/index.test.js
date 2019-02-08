@@ -4,7 +4,7 @@ const { resolve } = require("path");
 const Mocha = require("mocha");
 const { MochaRemoteClient } = require("mocha-remote-client");
 
-const CLI_PATH = resolve(__dirname, "../lib/mocha-remote.js");
+const CLI_PATH = resolve(__dirname, "../bin/mocha-remote");
 const SAMPLE_TEST_PATH = resolve(__dirname, "../../../integration-tests/sample.test.js");
 
 describe("mocha-remote-cli", () => {
@@ -19,7 +19,7 @@ describe("mocha-remote-cli", () => {
         const err = new Error(`Mocha cli closed unexpectedly (code = ${code})`);
         done(err);
       } else {
-        expect(output).to.contain("Usage: mocha [debug] [options] [files]");
+        expect(output).to.contain("Usage: mocha-remote");
         done();
       }
     });
