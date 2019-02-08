@@ -23,7 +23,7 @@ describe("basic", () => {
     // Create a server - which is supposed to run in Node
     server = new MochaRemoteServer();
     await server.start();
-    expect(server.getUrl()).to.equal("ws://127.0.0.1:8090");
+    expect(server.getUrl()).to.equal("ws://0.0.0.0:8090");
   });
 
   it("connects", async () => {
