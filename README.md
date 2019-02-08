@@ -24,7 +24,8 @@ actually start using this or have suggestions on how to improve the library and 
 ## Installing the client
 
 Install the client in the package that will be running tests.
-This will probably be an example app in a particular environment from which you want to run your tests.
+This will probably be an example app in a particular environment (React Native, Electron, Web app etc.) from which you
+want to run your tests.
 
 ```
 npm install mocha-remote-client --save
@@ -51,8 +52,7 @@ The client automatically (re)connects to the server.
 
 ## Installing the server (as a CLI)
 
-Install the Mocha Remote CLI into your project. It is a drop-in replacement for mocha, in fact its simply extending the
-Mocha CLI already available in the project.
+Install the Mocha Remote CLI into your project.
 
 ```
 npm install mocha mocha-remote-cli --save-dev
@@ -61,16 +61,18 @@ npm install mocha mocha-remote-cli --save-dev
 Run the server CLI from your terminal
 
 ```
-./node_modules/.bin/mocha-remote src/*.test.js
+npx mocha-remote
 ```
 
 or even better, add it as a test script in your projects package.json
 
 ```
 "scripts": {
-  "test": "mocha-remote src/*.test.js"
+  "test": "mocha-remote"
 }
 ```
+
+Run `npx mocha-remote -h` for more information on what runtime parameters are available.
 
 ## Installing the server (for a programatic API)
 
