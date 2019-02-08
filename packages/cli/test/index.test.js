@@ -58,7 +58,7 @@ describe("mocha-remote-cli", () => {
 
     it("can output the result", (done) => {
       let output = "";
-      cli = cp.spawn(CLI_PATH, [ SAMPLE_TEST_PATH ]);
+      cli = cp.spawn(CLI_PATH); // There should be no need to pass the tests
       // When the cli gives output, read it out ...
       cli.stdout.on("data", (data) => {
         output += data.toString();
