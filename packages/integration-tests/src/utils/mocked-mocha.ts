@@ -1,5 +1,6 @@
-import * as EventEmitter from "events";
-import * as Mocha from "mocha";
+import EventEmitter from "events";
+import Mocha from "mocha";
+import assert from "assert";
 
 export class MockedMocha extends Mocha {
 
@@ -16,6 +17,7 @@ export class MockedMocha extends Mocha {
     // Create and attach the reporter
     const Reporter = (this as any)._reporter as Mocha.ReporterConstructor;
     const reporter = new Reporter(runner, {});
+    assert(reporter);
     // Start the run asynchroniously to allow listeners to attach
     process.nextTick(() => {
       runner.run();

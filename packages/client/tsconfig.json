@@ -1,19 +1,14 @@
 {
+  "extends": "../../configs/tsconfig.json",
   "compilerOptions": {
     "target": "es5",
-    "declaration": true,
-    "sourceMap": true,
-    "removeComments": true,
-    "strict": true,
-    "outDir": ".",
-
-    "noUnusedLocals": true,
-    "noImplicitReturns": true,
-
+    "moduleResolution": "classic",
     "noResolve": true,
     "typeRoots": [
       "./types",
-      "../../types"
+      "../../types",
+      "./node_modules/@types",
+      "../../node_modules/@types"
     ],
     "types": [
       "debug",
@@ -22,11 +17,10 @@
       "flatted"
     ]
   },
-  "files": [
-    "src/index.ts"
+  "include": [
+    "src/**/*.ts"
   ],
   "exclude": [
-    "src/**/*.test.ts",
     "../server"
   ]
 }

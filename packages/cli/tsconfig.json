@@ -1,10 +1,6 @@
 {
   "extends": "../../configs/tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    
     "typeRoots": [
       "./types",
       "../../types",
@@ -12,14 +8,12 @@
       "../../node_modules/@types"
     ],
     "types": [
+      "commander",
       "debug",
-      "mocha",
-      "flatted",
-      "node",
-      "ws"
+      "node"
     ]
   },
   "include": [
     "src/**/*.ts"
-  ]
+  ],
 }

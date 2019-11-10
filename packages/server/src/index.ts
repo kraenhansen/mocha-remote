@@ -1,8 +1,9 @@
-import * as Debug from "debug";
-import * as EventEmitter from "events";
+import Debug from "debug";
 import { parse } from "flatted";
-import * as Mocha from "mocha";
-import * as WebSocket from "ws";
+import Mocha from "mocha";
+import WebSocket from "ws";
+
+import { FakeRunner } from "./FakeRunner";
 
 interface IEventMessage {
   eventName: string;
@@ -33,14 +34,13 @@ export interface IMochaRemoteServerConfig {
 }
 
 export class MochaRemoteServer extends Mocha {
-
   public static DEFAULT_CONFIG: IMochaRemoteServerConfig = {
     autoStart: true,
     callbacks: {},
     host: "0.0.0.0",
     id: "default",
     port: 8090,
-    stopAfterCompletion: false,
+    stopAfterCompletion: false
   };
 
   /**
@@ -48,11 +48,14 @@ export class MochaRemoteServer extends Mocha {
    */
   public static startRunExit(
     mochaOptions: Mocha.MochaOptions = {},
-    config: Partial<IMochaRemoteServerConfig> = {},
+    config: Partial<IMochaRemoteServerConfig> = {}
   ) {
     // Ensure the server autostarts
-    const server = new MochaRemoteServer(mochaOptions, { ...config, autoStart: true });
-    server.run((failures) => {
+    const server = new MochaRemoteServer(mochaOptions, {
+      ...config,
+      autoStart: true
+    });
+    server.run(failures => {
       if (failures === 0) {
         process.exit(0);
       } else {
@@ -64,11 +67,11 @@ export class MochaRemoteServer extends Mocha {
   private config: IMochaRemoteServerConfig;
   private wss?: WebSocket.Server;
   private client?: WebSocket;
-  private runner?: Mocha.Runner;
+  private runner?: FakeRunner;
 
   constructor(
     mochaOptions: Mocha.MochaOptions = {},
-    config: Partial<IMochaRemoteServerConfig> = {},
+    config: Partial<IMochaRemoteServerConfig> = {}
   ) {
     super(mochaOptions);
     this.config = { ...MochaRemoteServer.DEFAULT_CONFIG, ...config };
@@ -79,7 +82,7 @@ export class MochaRemoteServer extends Mocha {
     return new Promise<void>((resolve, reject) => {
       this.wss = new WebSocket.Server({
         host: this.config.host,
-        port: this.config.port,
+        port: this.config.port
       });
       // When the server starts listening
       this.wss.once("listening", () => {
@@ -94,7 +97,7 @@ export class MochaRemoteServer extends Mocha {
         reject(err);
       });
       // When a client connects
-      this.wss.on("connection", (ws) => {
+      this.wss.on("connection", ws => {
         debug("Client connected");
         // Check that the protocol matches
         const expectedProtocol = `mocha-remote:${this.config.id}`;
@@ -130,7 +133,7 @@ export class MochaRemoteServer extends Mocha {
     debug("Server is stopping");
     return new Promise((resolve, reject) => {
       if (this.wss) {
-        this.wss.close((err) => {
+        this.wss.close(err => {
           // Forget about the server
           delete this.wss;
           // Reject or resolve the promise
@@ -153,7 +156,7 @@ export class MochaRemoteServer extends Mocha {
 
     if (!this.wss) {
       if (this.config.autoStart) {
-        this.start().then(undefined, (err) => {
+        this.start().then(undefined, err => {
           debug(`Auto-starting failed: ${err.stack}`);
         });
       } else {
@@ -161,12 +164,12 @@ export class MochaRemoteServer extends Mocha {
       }
     }
 
-    if (this.runner) {
+    if (this.runner) {
       throw new Error("A run is already in progress");
     }
     // this.runner = new Mocha.Runner(this.suite, this.options.delay || false);
     // TODO: Stub this to match the Runner's interface
-    this.runner = new EventEmitter() as Mocha.Runner;
+    this.runner = new FakeRunner();
 
     // We need to access the private _reporter field
     const Reporter = (this as any)._reporter;
@@ -190,7 +193,8 @@ export class MochaRemoteServer extends Mocha {
 
     // Attach a listener to the run ending
     this.runner.once("end", () => {
-      const failures = this.runner && this.runner.stats && this.runner.stats.failures || 0;
+      const failures =
+        (this.runner && this.runner.stats && this.runner.stats.failures) || 0;
       // Delete the runner to allow another run
       delete this.runner;
       // Stop the server if we should
@@ -210,7 +214,7 @@ export class MochaRemoteServer extends Mocha {
     }
 
     // Return the runner
-    return this.runner;
+    return this.runner as Mocha.Runner;
   }
 
   public getUrl() {
@@ -238,29 +242,42 @@ export class MochaRemoteServer extends Mocha {
       const inflatedArgs = this.inflateMochaArgs(eventName, args);
       this.runner.emit(eventName, ...inflatedArgs);
     } else {
-      throw new Error("Received a message from the client, but server wasn't running");
+      throw new Error(
+        "Received a message from the client, but server wasn't running"
+      );
     }
-  }
+  };
 
   private inflateMochaArgs(eventName: string, args: any[]) {
     // Monkey patch the test object when it passes
-    if (["test", "test end", "pass", "fail", "pending", "suite", "suite end"].indexOf(eventName) >= 0) {
-        // Create an actual test object to allow calls to methods
-        args[0] = this.inflateRunnable(args[0]);
+    if (
+      [
+        "test",
+        "test end",
+        "pass",
+        "fail",
+        "pending",
+        "suite",
+        "suite end"
+      ].indexOf(eventName) >= 0
+    ) {
+      // Create an actual test object to allow calls to methods
+      args[0] = this.inflateRunnable(args[0]);
     }
     return args;
   }
 
   private inflateRunnable(data: { [k: string]: any }) {
-      const title: string = data.hasOwnProperty("title") ? data.title : "";
-      // Create an actual test object to allow calls to methods
-      const runnable = data.type === "test" ? new Mocha.Test(title) : new Mocha.Suite(title);
-      // Patch the data onto the test
-      Object.assign(runnable, data);
-      // If it has a parent - inflate that too
-      if (runnable.parent) {
-          runnable.parent = this.inflateRunnable(runnable.parent) as Mocha.Suite;
-      }
-      return runnable;
+    const title: string = data.hasOwnProperty("title") ? data.title : "";
+    // Create an actual test object to allow calls to methods
+    const runnable =
+      data.type === "test" ? new Mocha.Test(title) : new Mocha.Suite(title);
+    // Patch the data onto the test
+    Object.assign(runnable, data);
+    // If it has a parent - inflate that too
+    if (runnable.parent) {
+      runnable.parent = this.inflateRunnable(runnable.parent) as Mocha.Suite;
+    }
+    return runnable;
   }
 }
