@@ -1,7 +1,7 @@
-import * as Debug from "debug";
+import Debug from "debug";
 import { stringify } from "flatted";
-import * as WebSocket from "isomorphic-ws";
-import * as Mocha from "mocha";
+import WebSocket from "isomorphic-ws";
+import Mocha from "mocha";
 
 interface IEventMessage {
   eventName: string;
@@ -181,6 +181,7 @@ export class MochaRemoteClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const preparedArgs = this.prepareArgs(args);
       const data = stringify({ eventName, args: preparedArgs });
+      debug(`Sending a '${eventName}' message`);
       this.ws.send(data);
     } else {
       throw new Error(`Cannot send ${eventName} WebSocket is closed`);

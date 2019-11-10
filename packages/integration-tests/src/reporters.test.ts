@@ -1,11 +1,11 @@
 import { expect } from "chai";
-import * as Mocha from "mocha";
-import * as path from "path";
+import Mocha from "mocha";
+import path from "path";
 
-import { MochaRemoteClient } from "mocha-remote-client/src";
-import { MochaRemoteServer } from "mocha-remote-server/src";
+import { MochaRemoteClient } from "mocha-remote-client";
+import { MochaRemoteServer } from "mocha-remote-server";
 
-import { ob, removeTimings } from "../utils";
+import { ob, removeTimings } from "./utils";
 
 describe("reporters", () => {
   let server: MochaRemoteServer;
@@ -62,7 +62,7 @@ describe("reporters", () => {
           let mocha: Mocha;
           beforeEach(async () => {
             // Save the current global to continue the script
-            const globalBefore = Object.apply({}, global);
+            const globalBefore = Object.assign({}, global);
             // Initialize the clintside test
             mocha = new Mocha({ fullStackTrace: true });
             // Bust the cache if any
@@ -70,7 +70,7 @@ describe("reporters", () => {
             // Add the test file
             mocha.addFile(sampleTestPath);
             // Restore the global
-            Object.apply(global, globalBefore);
+            Object.assign(global, globalBefore);
           });
 
           // Disabling the output buffering, in case the test failed and never did this itself

@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import * as Mocha from "mocha";
+import Mocha from "mocha";
 
-import { MochaRemoteClient } from "mocha-remote-client/src";
-import { MochaRemoteServer } from "mocha-remote-server/src";
+import { MochaRemoteClient } from "mocha-remote-client";
+import { MochaRemoteServer } from "mocha-remote-server";
 
-import { MockedMocha } from "../utils";
+import { MockedMocha } from "./utils";
 
 describe("basic", () => {
   let server: MochaRemoteServer;

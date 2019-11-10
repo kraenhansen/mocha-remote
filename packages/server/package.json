@@ -3,7 +3,9 @@
   "version": "0.9.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
-    "prepack": "cp ../../README.md ."
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "cp ../../README.md .",
+    "test": "echo 'Nothing to do'"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,17 +21,15 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "devDependencies": {
-    "@types/chai": "^4.1.4",
-    "@types/debug": "0.0.30",
-    "@types/ws": "^5.1.2",
-    "chai": "^4.1.2"
+    "@types/ws": "^6.0.3",
+    "chai": "^4.2.0"
   },
   "dependencies": {
-    "debug": "^3.1.0",
-    "flatted": "^0.2.3",
-    "ws": "^5.2.2"
+    "debug": "^4.1.1",
+    "flatted": "^2.0.1",
+    "ws": "^7.2.0"
   },
   "peerDependencies": {
-    "mocha": "^5"
+    "mocha": "^6"
   }
 }

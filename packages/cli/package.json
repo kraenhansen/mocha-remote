@@ -3,8 +3,9 @@
   "version": "0.9.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "prepack": "cp ../../README.md .",
-    "test": "mocha --opts configs/mocha.opt"
+    "test": "echo 'Needs to be migrated'"
   },
   "bin": {
     "mocha-remote": "./bin/mocha-remote"
@@ -23,13 +24,15 @@
   "dependencies": {
     "commander": "^2.19.0",
     "debug": "^3.1.0",
-    "mocha-remote-server": "^0.3.0"
+    "mocha-remote-client": "^0.9.1",
+    "mocha-remote-server": "^0.9.1"
   },
   "devDependencies": {
-    "mocha-remote-server": "file://../server",
-    "mocha-remote-client": "file://../client"
+    "@types/commander": "^2.12.2",
+    "@types/debug": "^4.1.5",
+    "@types/node": "^10.17.4"
   },
   "peerDependencies": {
-    "mocha": "^5"
+    "mocha": "^6"
   }
 }

@@ -1,10 +1,10 @@
 import { expect } from "chai";
-import * as path from "path";
+import path from "path";
 
-import { MochaRemoteClient } from "mocha-remote-client/src";
-import { MochaRemoteServer } from "mocha-remote-server/src";
+import { MochaRemoteClient } from "mocha-remote-client";
+import { MochaRemoteServer } from "mocha-remote-server";
 
-import { delay } from "../utils";
+import { delay } from "./utils";
 
 describe("reconnecting client", () => {
   let server: MochaRemoteServer;
