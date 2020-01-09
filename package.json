@@ -7,10 +7,8 @@
     "test": "lerna exec --concurrency 1 -- npm test",
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "lerna exec -- npm run build",
-    "package": "npm run cli/package && npm run client/package && npm run server/package",
-    "version": "node scripts/update-versions.js && git add packages/*/package*.json",
+    "version": "lerna version",
     "postversion": "git push && git push --tags",
-    "postinstall": "node scripts/postinstall.js",
     "prepublishOnly": "npm run build",
     "prepare": "lerna bootstrap"
   },

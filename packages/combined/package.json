@@ -1,0 +1,21 @@
+{
+  "name": "mocha-remote",
+  "private": true,
+  "version": "0.9.1",
+  "description": "Run Mocha tests somewhere - get reporting elsewhere",
+  "author": {
+    "name": "Kræn Hansen",
+    "email": "mail@kraenhansen.dk",
+    "url": "https://github.com/kraenhansen"
+  },
+  "keywords": [
+    "mocha"
+  ],
+  "repository": "github:kraenhansen/mocha-remote",
+  "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
+  "license": "ISC",
+  "dependencies": {
+    "mocha-remote-client": "0.9.1",
+    "mocha-remote-server": "0.9.1"
+  }
+}
