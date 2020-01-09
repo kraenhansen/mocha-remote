@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "echo 'Nothing to build in the combined package'",
@@ -18,7 +18,7 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
-    "mocha-remote-client": "0.9.1",
-    "mocha-remote-server": "0.9.1"
+    "mocha-remote-client": "^0.10.0",
+    "mocha-remote-server": "^0.10.0"
   }
 }
