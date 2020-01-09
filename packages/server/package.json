@@ -3,9 +3,9 @@
   "version": "0.9.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "../../node_modules/.bin/tsc -p tsconfig.build.json",
     "prepack": "cp ../../README.md .",
-    "test": "echo 'Nothing to do'"
+    "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

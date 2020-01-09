@@ -5,7 +5,7 @@
   "description": "The integration tests of the project",
   "scripts": {
     "build": "echo 'No need to build the tests'",
-    "test": "mocha --opts ../../configs/mocha.opts **/*.test.ts"
+    "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },
   "author": {
     "name": "Kræn Hansen",
