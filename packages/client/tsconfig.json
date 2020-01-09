@@ -3,18 +3,11 @@
   "compilerOptions": {
     "target": "es5",
     "moduleResolution": "classic",
-    "noResolve": true,
     "typeRoots": [
       "./types",
       "../../types",
       "./node_modules/@types",
       "../../node_modules/@types"
-    ],
-    "types": [
-      "debug",
-      "mocha",
-      "isomorphic-ws",
-      "flatted"
     ]
   },
   "include": [

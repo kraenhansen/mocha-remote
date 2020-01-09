@@ -1,9 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "declaration": true,
-    "sourceMap": true,
-    "outDir": "dist/node",
+    "noResolve": true,
     "types": [
       "debug",
       "mocha",
