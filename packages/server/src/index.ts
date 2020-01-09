@@ -103,7 +103,10 @@ export class MochaRemoteServer extends Mocha {
         const expectedProtocol = `mocha-remote:${this.config.id}`;
         if (ws.protocol !== expectedProtocol) {
           // Protocol mismatch - close the connection
-          ws.close(1002, `Expected a different protocol (${expectedProtocol})`);
+          ws.close(
+            1002,
+            `Expected "${expectedProtocol}" protocol got "${ws.protocol}"`
+          );
           return;
         }
         if (this.client) {
