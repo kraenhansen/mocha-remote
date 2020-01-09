@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-client",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "npm run build/webpack && npm run build/node",
