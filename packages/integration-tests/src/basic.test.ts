@@ -100,7 +100,7 @@ describe("basic", () => {
         url: server.getUrl(),
         whenDisconnected: ({ code, reason }) => {
           expect(code).to.equal(1002);
-          expect(reason).to.equal("Expected a different protocol (mocha-remote:a-non-default-id)");
+          expect(reason).to.equal('Expected "mocha-remote:a-non-default-id" protocol got "mocha-remote:default"');
           resolve();
         },
       });

@@ -7,6 +7,9 @@
     "build": "echo 'No need to build the tests'",
     "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },
+  "files": [
+    "src"
+  ],
   "author": {
     "name": "Kræn Hansen",
     "email": "mail@kraenhansen.dk",
