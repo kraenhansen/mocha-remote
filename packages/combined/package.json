@@ -2,6 +2,10 @@
   "name": "mocha-remote",
   "version": "0.9.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
+  "scripts": {
+    "build": "echo 'Nothing to build in the combined package'",
+    "prepack": "cp ../../README.md ."
+  },
   "author": {
     "name": "Kræn Hansen",
     "email": "mail@kraenhansen.dk",

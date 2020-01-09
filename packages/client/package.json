@@ -4,9 +4,9 @@
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "npm run build/webpack && npm run build/node",
-    "prepack": "cp ../../README.md .",
     "build/webpack": "webpack --config config/webpack.js",
     "build/node": "../../node_modules/.bin/tsc -p tsconfig.node.json",
+    "prepack": "cp ../../README.md .",
     "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },
   "main": "dist/node/index.js",
