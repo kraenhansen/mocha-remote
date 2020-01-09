@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-cli",
-  "version": "0.11.0",
+  "version": "0.11.2",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "main": "dist/index.js",
   "scripts": {
