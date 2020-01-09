@@ -2,6 +2,7 @@
   "name": "mocha-remote-cli",
   "version": "0.11.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
+  "main": "dist/index.js",
   "scripts": {
     "build": "../../node_modules/.bin/tsc -p tsconfig.build.json",
     "prepack": "cp ../../README.md .",
