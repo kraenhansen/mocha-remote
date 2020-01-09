@@ -6,7 +6,8 @@
   "scripts": {
     "build": "../../node_modules/.bin/tsc -p tsconfig.build.json",
     "prepack": "cp ../../README.md .",
-    "test": "echo 'Needs to be migrated'"
+    "test": "echo 'Needs to be migrated'",
+    "start": "../../node_modules/.bin/ts-node src/index.ts"
   },
   "bin": {
     "mocha-remote": "./bin/mocha-remote"
