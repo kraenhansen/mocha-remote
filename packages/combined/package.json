@@ -1,6 +1,5 @@
 {
   "name": "mocha-remote",
-  "private": true,
   "version": "0.9.1",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "author": {
