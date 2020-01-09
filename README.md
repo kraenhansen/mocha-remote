@@ -3,29 +3,24 @@
 </p>
 
 <p align="center">
-  ☕️🕹 Run Mocha tests somewhere - get reporting elsewhere 🕹☕️
+  ☕️🕹 Run Mocha tests somewhere - get reporting in your terminal 🕹☕️
 </p>
 
 ## Why?
 
-I wanted to run a single Mocha test suite across multiple environments (Node.js, Electron and React-Native) with ideally
-no changes to the test suite. I found that running the Mocha tests inside the Electron on React-Native apps, it was
-difficult to control it, start / stop external services and get reporting on which tests pass or fail.
+I wanted to run a single Mocha test suite across multiple environments (Node.js, Electron and React-Native) with ideally no changes to the test suite.
+I found that running the tests inside a Electron or a React-Native app, was difficult - it was hard to control it, start / stop external services and get reporting on which tests pass or fail.
 
-If you only need to run your tests in browsers, [the Karma test runner](https://karma-runner.github.io/) could be a good
-alternative to this package. If you're developing a library that must work in other JavaScript environments, such as
-React Native, I haven't found any other alternatives.
+If you only need to run your tests in browsers, [the Karma test runner](https://karma-runner.github.io/) could be a good alternative to this package. If you're developing a library that must work in other JavaScript environments, such as React Native, I haven't found any other alternatives.
 
 ## Please Note: This is very early-stage
 
-I just created this - I would appreciate a shout out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you
-actually start using this or have suggestions on how to improve the library and its interface.
+I would appreciate a shout-out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you actually start using this or have suggestions on how to improve the library and its interface.
 
 ## Installing the client
 
 Install the client in the package that will be running tests.
-This will probably be an example app in a particular environment (React Native, Electron, Web app etc.) from which you
-want to run your tests.
+This will probably be an example app in a particular environment (React Native, Electron, Web app etc.) from which you want to run your tests.
 
 ```
 npm install mocha-remote-client --save
@@ -113,9 +108,8 @@ server.start().then(() => {
 The `startRunExit` convenience method does exactly that, so you can just call:
 
 ```javascript
-// Import if the platform supports it
+// Import or require (you need just one of these lines 🤓)
 import { MochaRemoteServer } from "mocha-remote-server";
-// Alternatively use a CommonJS require (you need just one of these lines 🤓)
 const { MochaRemoteServer } = require("mocha-remote-server");
 // Start, run and exit when it completes remote
 MochaRemoteServer.startRunExit();
@@ -126,10 +120,8 @@ MochaRemoteServer.startRunExit();
 1. This is still very early stage - the API may very well change into something more usable.
 2. I need help to move this forward, please create an issue (or even better a PR) if you have trouble using it.
 3. The server could easily be wrapped into a mocha compatible cli - that would be awesome.
-4. Not all reporters behave exactly the same on the server side as if they were running without this library. Currently
-   the integration tests are running with "base", "dot", "spec", "list", "min" and "nyan".
-   See [the integration tests](https://github.com/kraenhansen/mocha-remote/blob/master/integration-tests/client-and-server.test.ts#L101-L114)
-   for a detailed description on why and how severely other reporters are failing.
+4. Not all reporters behave exactly the same on the server side as if they were running without this library. Currently the integration tests are running with "base", "dot", "spec", "list", "min" and "nyan".
+   See [the integration tests](https://github.com/kraenhansen/mocha-remote/blob/master/integration-tests/client-and-server.test.ts#L101-L114) for a detailed description on why and how severely other reporters are failing.
 
 ---
 
