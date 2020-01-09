@@ -28,14 +28,14 @@ describe("reconnecting client", () => {
     server = new MochaRemoteServer({ reporter: "base" }, { autoStart: false });
 
     // Create a client - which is supposed to run where the tests are running
-    const clientReRunning = new Promise((resolve) => {
+    const clientReRunning = new Promise(resolve => {
       let runningCounter = 0;
       client = new MochaRemoteClient({
-        whenInstrumented: (mocha) => {
+        whenInstrumented: mocha => {
           delete require.cache[sampleTestPath];
           mocha.addFile(sampleTestPath);
         },
-        whenRunning: (runner) => {
+        whenRunning: runner => {
           if (runningCounter === 0) {
             runningCounter++;
           } else if (runningCounter === 1) {
@@ -45,9 +45,11 @@ describe("reconnecting client", () => {
               resolve();
             });
           } else {
-            throw new Error(`Didn't expect the test to run ${runningCounter + 1} times`);
+            throw new Error(
+              `Didn't expect the test to run ${runningCounter + 1} times`
+            );
           }
-        },
+        }
       });
     });
 
@@ -56,8 +58,8 @@ describe("reconnecting client", () => {
     // Start the server
     await server.start();
 
-    await new Promise((resolve) => {
-      server.run((failures) => {
+    await new Promise(resolve => {
+      server.run(failures => {
         expect(failures).to.equal(1);
         resolve();
       });
@@ -71,8 +73,8 @@ describe("reconnecting client", () => {
     await server.start();
 
     // Run again
-    await new Promise((resolve) => {
-      server.run((failures) => {
+    await new Promise(resolve => {
+      server.run(failures => {
         expect(failures).to.equal(1);
         resolve();
       });
