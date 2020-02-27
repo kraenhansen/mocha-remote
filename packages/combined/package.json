@@ -3,6 +3,8 @@
   "version": "0.12.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "bin": "cli.js",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "build": "echo 'Nothing to build in the combined package'",
     "prepack": "cp ../../README.md ."
