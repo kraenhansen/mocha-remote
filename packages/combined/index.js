@@ -1,4 +1,4 @@
 module.exports = {
-    Client: require("mocha-remote-client"),
-    Server: require("mocha-remote-server"),
+	...require('mocha-remote-client'),
+	...require('mocha-remote-server'),
 };
