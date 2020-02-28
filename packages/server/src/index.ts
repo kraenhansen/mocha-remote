@@ -220,6 +220,20 @@ export class MochaRemoteServer extends Mocha {
     return this.runner as Mocha.Runner;
   }
 
+  public async runAndStop(): Promise<void> {
+    try {
+      // Run the tests
+      // TODO: Consider adding a timeout
+      const failures = await new Promise<number>(resolve => this.run(resolve));
+      if (failures > 0) {
+        throw new Error(`Tests completed with ${failures} failures`);
+      }
+    } finally {
+      // Stop the server
+      await this.stop();
+    }
+  }
+
   public getUrl() {
     if (this.wss) {
       const { address, port } = this.wss.address() as WebSocket.AddressInfo;
