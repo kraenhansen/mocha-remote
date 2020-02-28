@@ -6,6 +6,7 @@
     "build": "npm run build/webpack && npm run build/node",
     "build/webpack": "webpack --config config/webpack.js",
     "build/node": "../../node_modules/.bin/tsc -p tsconfig.node.json",
+    "prepare": "npm run build",
     "prepack": "cp ../../README.md .",
     "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },

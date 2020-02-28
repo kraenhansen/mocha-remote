@@ -7,7 +7,7 @@
     "test/dist": "mocha --opts configs/mocha.opts integration-tests/dist.test.ts",
     "build": "lerna exec -- npm run build",
     "prepublishOnly": "npm run build",
-    "publish": "npm run build && npx lerna publish",
+    "publish": "npx lerna publish",
     "prepare": "lerna bootstrap"
   },
   "author": {

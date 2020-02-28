@@ -4,6 +4,7 @@
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "../../node_modules/.bin/tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "prepack": "cp ../../README.md .",
     "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
   },
