@@ -100,7 +100,7 @@ export class MochaRemoteServer extends Mocha {
       this.wss.on("connection", ws => {
         debug("Client connected");
         // Check that the protocol matches
-        const expectedProtocol = `mocha-remote:${this.config.id}`;
+        const expectedProtocol = `mocha-remote-${this.config.id}`;
         if (ws.protocol !== expectedProtocol) {
           // Protocol mismatch - close the connection
           ws.close(
@@ -154,7 +154,7 @@ export class MochaRemoteServer extends Mocha {
     });
   }
 
-  public run(fn?: (failures: number) => void) {
+  public run(fn: (failures: number) => void): Mocha.Runner {
     debug("Server started running tests");
 
     if (!this.wss) {

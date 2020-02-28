@@ -57,7 +57,7 @@ const MOCHA_EVENT_NAMES = [
   "hook end", // (hook) hook complete
   "pass", // (test) test passed
   "fail", // (test, err) test failed
-  "pending", // (test) test pending
+  "pending" // (test) test pending
 ];
 
 export class MochaRemoteClient {
@@ -65,11 +65,11 @@ export class MochaRemoteClient {
   public static DEFAULT_CONFIG: IMochaRemoteClientConfig = {
     autoConnect: true,
     autoRetry: true,
-    createMocha: (config) => new Mocha(config.mochaOptions),
+    createMocha: config => new Mocha(config.mochaOptions),
     id: "default",
     mochaOptions: {},
     retryDelay: 500,
-    url: "ws://localhost:8090",
+    url: "ws://localhost:8090"
   };
 
   private config: IMochaRemoteClientConfig;
@@ -79,7 +79,7 @@ export class MochaRemoteClient {
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
     this.config = { ...MochaRemoteClient.DEFAULT_CONFIG, ...config };
-    if (typeof(WebSocket) === "undefined") {
+    if (typeof WebSocket === "undefined") {
       throw new Error("mocha-remote-client expects a global WebSocket");
     } else if (this.config.autoConnect) {
       this.connect();
@@ -95,11 +95,11 @@ export class MochaRemoteClient {
       clearTimeout(this.retryTimeout);
     }
     debug(`Connecting to ${this.config.url}`);
-    this.ws = new WebSocket(this.config.url, `mocha-remote:${this.config.id}`);
+    this.ws = new WebSocket(this.config.url, `mocha-remote-${this.config.id}`);
     this.ws.addEventListener("close", this.onClose);
     this.ws.addEventListener("error", this.onError as any);
     this.ws.addEventListener("message", this.onMessage);
-    this.ws.addEventListener("open", (e) => {
+    this.ws.addEventListener("open", e => {
       debug(`Connected to ${this.config.url}`);
       if (this.config.whenConnected) {
         this.config.whenConnected(e.target as WebSocket);
@@ -136,12 +136,16 @@ export class MochaRemoteClient {
     // Monkey patch the run method
     instrumentedMocha.originalRun = mocha.run;
     instrumentedMocha.run = () => {
-      throw new Error("This Mocha instance is instrumented by mocha-remote-client, use the server to run tests");
+      throw new Error(
+        "This Mocha instance is instrumented by mocha-remote-client, use the server to run tests"
+      );
     };
     // The reporter method might require files that do not exist when required from a bundle
     instrumentedMocha.reporter = () => {
       // tslint:disable-next-line:no-console
-      console.warn("This Mocha instance is instrumented by mocha-remote-client, setting a reporter has no effect");
+      console.warn(
+        "This Mocha instance is instrumented by mocha-remote-client, setting a reporter has no effect"
+      );
       return instrumentedMocha;
     };
     // Notify that a Mocha instance is now instrumented
@@ -189,13 +193,13 @@ export class MochaRemoteClient {
   }
 
   private prepareArgs(args: any[]) {
-    return args.map((arg) => {
+    return args.map(arg => {
       // Stringifing an Error doesn't extract the message or stacktrace
       // @see https://stackoverflow.com/a/18391400/503899
       if (arg instanceof Error) {
         const result: { [k: string]: any } = {};
-        Object.getOwnPropertyNames(arg).forEach((key) => {
-            result[key] = (arg as any)[key];
+        Object.getOwnPropertyNames(arg).forEach(key => {
+          result[key] = (arg as any)[key];
         });
         return result;
       } else {
@@ -205,25 +209,29 @@ export class MochaRemoteClient {
   }
 
   private onClose = ({ code, reason }: IDisconnectedParams) => {
-    debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
+    debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
     // Forget about the client
     delete this.ws;
     // Try reconnecting
     if (code !== 1000 && this.config.autoRetry) {
-    // Try to reconnect
+      // Try to reconnect
       debug(`Re-connecting in ${this.config.retryDelay}ms`);
-      this.retryTimeout = setTimeout(() => {
+      this.retryTimeout = (setTimeout(() => {
         this.connect();
-      }, this.config.retryDelay) as any as number;
+      }, this.config.retryDelay) as any) as number;
     }
     if (this.config.whenDisconnected) {
       this.config.whenDisconnected({ code, reason });
     }
-  }
+  };
 
   private onError = ({ error }: { error: Error }) => {
-    debug(`WebSocket error: ${error ? error.message || "No message" : "No specific error"}`);
-  }
+    debug(
+      `WebSocket error: ${
+        error ? error.message || "No message" : "No specific error"
+      }`
+    );
+  };
 
   private onMessage = (event: { data: string }) => {
     const data = JSON.parse(event.data) as IEventMessage;
@@ -234,7 +242,7 @@ export class MochaRemoteClient {
       delete this.instrumentedMocha;
       this.run(mocha);
     }
-  }
+  };
 
   private createReporter() {
     const client = this;
@@ -243,11 +251,10 @@ export class MochaRemoteClient {
       constructor(runner: Mocha.Runner) {
         super(runner);
         // Loop the names and add listeners for all of them
-        MOCHA_EVENT_NAMES.forEach((eventName) => {
+        MOCHA_EVENT_NAMES.forEach(eventName => {
           runner.addListener(eventName, client.send.bind(client, eventName));
         });
       }
     };
   }
-
 }
