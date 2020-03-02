@@ -1,20 +1,16 @@
 /**
- * Sample React Native App that uses Mocha Remote client
+ * Sample React Native App
  * https://github.com/facebook/react-native
- * https://github.com/kraenhansen/mocha-remote
  *
  * @format
- * @flow
  */
 
-import React, { Component } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import React, {Component} from 'react';
+import {StyleSheet, View, Text} from 'react-native';
+import {MochaRemoteClient} from 'mocha-remote-client';
 
-import { MochaRemoteClient } from "mocha-remote-client";
-
-type Props = {};
-export class App extends Component<Props> {
-  state = { status: "waiting" };
+export class App extends Component {
+  state = {status: 'waiting'};
 
   componentDidMount() {
     this.prepareTests();
@@ -36,20 +32,22 @@ export class App extends Component<Props> {
   }
 
   getStatusMessage() {
-    if (this.state.status === "waiting") {
-      return "Waiting for server to start tests";
-    } else if (this.state.status === "running") {
-      return "Running the tests";
-    } else if (this.state.status === "ended") {
-      return "The tests ended";
+    if (this.state.status === 'waiting') {
+      return 'Waiting for server to start tests';
+    } else if (this.state.status === 'running') {
+      return 'Running the tests';
+    } else if (this.state.status === 'ended') {
+      return 'The tests ended';
     } else {
       return null;
     }
   }
 
   getStatusDetails() {
-    if (this.state.status === "running") {
-      const progress = `${this.state.currentTestIndex + 1}/${this.state.totalTests}`;
+    if (this.state.status === 'running') {
+      const progress = `${this.state.currentTestIndex + 1}/${
+        this.state.totalTests
+      }`;
       return `${progress}: ${this.state.currentTest}`;
     } else {
       return null;
@@ -58,29 +56,29 @@ export class App extends Component<Props> {
 
   prepareTests() {
     this.client = new MochaRemoteClient({
-      whenInstrumented: (mocha) => {
+      whenInstrumented: mocha => {
         // Set the title of the root suite
         mocha.suite.title = `React-Native on ${Platform.OS}`;
         // Require tests
-        require("./test/simple.test.js");
+        require('./test/simple.test.js');
       },
-      whenRunning: (runner) => {
-        runner.on("test", (test) => {
-            // Compute the current test index - incrementing it if we're running
-            const currentTestIndex =
-              this.state.status === "running"
+      whenRunning: runner => {
+        runner.on('test', test => {
+          // Compute the current test index - incrementing it if we're running
+          const currentTestIndex =
+            this.state.status === 'running'
               ? this.state.currentTestIndex + 1
               : 0;
-            // Set the state to update the UI
-            this.setState({
-              status: "running",
-              currentTest: test.fullTitle(),
-              currentTestIndex,
-              totalTests: runner.total,
-            });
+          // Set the state to update the UI
+          this.setState({
+            status: 'running',
+            currentTest: test.fullTitle(),
+            currentTestIndex,
+            totalTests: runner.total,
+          });
         });
-        runner.on("end", () => {
-            this.setState({ status: "ended" });
+        runner.on('end', () => {
+          this.setState({status: 'ended'});
         });
       },
     });
@@ -105,3 +103,5 @@ const styles = StyleSheet.create({
     margin: 10,
   },
 });
+
+export default App;

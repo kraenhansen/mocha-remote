@@ -5,16 +5,10 @@ might behave differently when running in the device than when running in Node.js
 
 ## Setup instructions
 
-First install the react-native command-line interface - if you don't already have that.
+Initialize a new React Native project
 
 ```
-npm install react-native-cli -g
-```
-
-Then initialize a new React Native project
-
-```
-react-native init MyTestApplication
+npx react-native init MyTestApplication
 ```
 
 Install Mocha, the mocha-remote-client a dependencies of your react native project
