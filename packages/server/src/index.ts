@@ -12,6 +12,16 @@ interface IEventMessage {
 
 const debug = Debug("mocha-remote:server");
 
+function createPromiseHandle() {
+  let resolve: () => void = () => {
+    throw new Error(
+      "Expected new Promise callback to be called synchronisously"
+    );
+  };
+  const promise = new Promise<void>(r => (resolve = r));
+  return { promise, resolve };
+}
+
 export interface ICallbacks {
   /** Called when the server is waiting for a client to connect */
   waitingForClient?: () => void;
@@ -29,6 +39,7 @@ export interface IMochaRemoteServerConfig {
   host: string;
   port: number;
   stopAfterCompletion: boolean;
+  runOnConnection: boolean;
   /** An ID expected by the clients connecting */
   id: string;
 }
@@ -40,7 +51,8 @@ export class MochaRemoteServer extends Mocha {
     host: "0.0.0.0",
     id: "default",
     port: 8090,
-    stopAfterCompletion: false
+    stopAfterCompletion: false,
+    runOnConnection: false
   };
 
   /**
@@ -64,10 +76,13 @@ export class MochaRemoteServer extends Mocha {
     });
   }
 
+  public readonly stopped: Promise<void>;
+
   private config: IMochaRemoteServerConfig;
   private wss?: WebSocket.Server;
   private client?: WebSocket;
   private runner?: FakeRunner;
+  private stoppedPromiseHandle = createPromiseHandle();
 
   constructor(
     mochaOptions: Mocha.MochaOptions = {},
@@ -75,6 +90,7 @@ export class MochaRemoteServer extends Mocha {
   ) {
     super(mochaOptions);
     this.config = { ...MochaRemoteServer.DEFAULT_CONFIG, ...config };
+    this.stopped = this.stoppedPromiseHandle.promise;
   }
 
   public start() {
@@ -123,6 +139,13 @@ export class MochaRemoteServer extends Mocha {
         // If we already have a runner, it can run now that we have a client
         if (this.runner) {
           this.send("run");
+        } else {
+          if (this.config.runOnConnection) {
+            debug("Start running tests because a client connected");
+            this.run(() => {
+              debug("Stopped running tests from connection");
+            });
+          }
         }
       });
     }).then(() => {
@@ -151,6 +174,8 @@ export class MochaRemoteServer extends Mocha {
       }
     }).then(() => {
       debug("Server was stopped");
+      // Resolve the stopped promise
+      this.stoppedPromiseHandle.resolve();
     });
   }
 
