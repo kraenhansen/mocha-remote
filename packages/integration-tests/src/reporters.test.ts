@@ -52,8 +52,8 @@ describe("reporters", () => {
       "min",
       // "json-stream", // Missing ",{"total":3}" printing a start event & non-deterministic start, end and duration
       // "markdown", // Throws an Error: Cannot send fail WebSocket is closed
-      "nyan",
-    ].forEach((reporter) => {
+      "nyan"
+    ].forEach(reporter => {
       describe(`with "${reporter}" reporter`, () => {
         let regularOutput: string;
         let remoteOutput: string;
@@ -76,12 +76,12 @@ describe("reporters", () => {
           // Disabling the output buffering, in case the test failed and never did this itself
           afterEach(ob.disable);
 
-          it("completes when not instrumented", (done) => {
+          it("completes when not instrumented", done => {
             // Run the mocha with the reporter
             const output = ob.enable();
             mocha.reporter(reporter);
             // Run and await completion
-            mocha.run((failures) => {
+            mocha.run(failures => {
               regularOutput = output().toString("utf8");
               expect(failures).to.equal(1);
               done();
@@ -102,9 +102,9 @@ describe("reporters", () => {
             // Set the reporter, run and await completion
             const output = ob.enable();
             // Run and await completion
-            await new Promise((resolve) => {
+            await new Promise(resolve => {
               // We're asking the server to start
-              server.run((failures) => {
+              server.run(failures => {
                 remoteOutput = output().toString("utf8");
                 expect(failures).to.equal(1);
                 resolve();
@@ -115,13 +115,18 @@ describe("reporters", () => {
 
         describe("outputs", () => {
           it("is the same", () => {
-            if (typeof(regularOutput) === "string" && typeof(remoteOutput) === "string") {
+            if (
+              typeof regularOutput === "string" &&
+              typeof remoteOutput === "string"
+            ) {
               // Convert the stdout buffers to strings and compare the output
               const regularOutputTimeless = removeTimings(regularOutput);
               const remoteOutputTimeless = removeTimings(remoteOutput);
               expect(remoteOutputTimeless).to.equal(regularOutputTimeless);
             } else {
-              throw new Error("Cannot compare outputs if tests were not running");
+              throw new Error(
+                "Cannot compare outputs if tests were not running"
+              );
             }
           });
         });

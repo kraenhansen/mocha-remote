@@ -54,14 +54,11 @@ const mocha = new MochaRemoteServer(
     host: program.hostname,
     port: parseInt(program.port, 10),
     id: program.id,
-    callbacks: {
-      serverStarted: () => {
-        console.log(
-          `Mocha Remote Server is listening for clients with id = '${
-            program.id
-          }' on ${mocha.getUrl()}`
-        );
-      }
+    onServerStarted: server => {
+      const url = server.getUrl();
+      console.log(
+        `Mocha Remote Server is listening for clients with id = '${program.id}' on ${url}`
+      );
     }
   }
 );

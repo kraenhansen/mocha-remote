@@ -22,32 +22,27 @@ function createPromiseHandle() {
   return { promise, resolve };
 }
 
-export interface ICallbacks {
-  /** Called when the server is waiting for a client to connect */
-  waitingForClient?: () => void;
-  /** Client connected */
-  clientConnection?: (client: WebSocket) => void;
-  /** Called when the server has started */
-  serverStarted?: (server: MochaRemoteServer) => void;
-  /** Called when the server experience an error */
-  serverFailed?: (server: MochaRemoteServer, err: Error) => void;
-}
-
 export interface IMochaRemoteServerConfig {
   autoStart: boolean;
-  callbacks: Partial<ICallbacks>;
   host: string;
   port: number;
   stopAfterCompletion: boolean;
   runOnConnection: boolean;
   /** An ID expected by the clients connecting */
   id: string;
+  /** Called when the server has started running, but is waiting for a client to connect */
+  onAwaitingClient?: () => void;
+  /** Client connected */
+  onClientConnection?: (client: WebSocket) => void;
+  /** Called when the server has started */
+  onServerStarted?: (server: MochaRemoteServer) => void;
+  /** Called when the server experience an error */
+  onServerFailed?: (server: MochaRemoteServer, err: Error) => void;
 }
 
 export class MochaRemoteServer extends Mocha {
   public static DEFAULT_CONFIG: IMochaRemoteServerConfig = {
     autoStart: true,
-    callbacks: {},
     host: "0.0.0.0",
     id: "default",
     port: 8090,
@@ -100,57 +95,24 @@ export class MochaRemoteServer extends Mocha {
         host: this.config.host,
         port: this.config.port
       });
+      // When a client connects
+      this.wss.on("connection", this.onConnection);
       // When the server starts listening
       this.wss.once("listening", () => {
         debug(`Server is listening on ${this.getUrl()}`);
         resolve();
       });
+      // If an error happens while starting
       this.wss.once("error", (err: Error) => {
         debug(`Server failed to start ${err.stack}`);
-        if (this.config.callbacks.serverFailed) {
-          this.config.callbacks.serverFailed(this, err);
+        if (this.config.onServerFailed) {
+          this.config.onServerFailed(this, err);
         }
         reject(err);
       });
-      // When a client connects
-      this.wss.on("connection", ws => {
-        debug("Client connected");
-        // Check that the protocol matches
-        const expectedProtocol = `mocha-remote-${this.config.id}`;
-        if (ws.protocol !== expectedProtocol) {
-          // Protocol mismatch - close the connection
-          ws.close(
-            1002,
-            `Expected "${expectedProtocol}" protocol got "${ws.protocol}"`
-          );
-          return;
-        }
-        if (this.client) {
-          debug("A client was already connected");
-          this.client.removeAllListeners();
-        }
-        // Hang onto the client
-        this.client = ws;
-        this.client.on("message", this.onMessage);
-        // Signal that a client has connected
-        if (this.config.callbacks.clientConnection) {
-          this.config.callbacks.clientConnection(this.client);
-        }
-        // If we already have a runner, it can run now that we have a client
-        if (this.runner) {
-          this.send("run");
-        } else {
-          if (this.config.runOnConnection) {
-            debug("Start running tests because a client connected");
-            this.run(() => {
-              debug("Stopped running tests from connection");
-            });
-          }
-        }
-      });
     }).then(() => {
-      if (this.config.callbacks.serverStarted) {
-        this.config.callbacks.serverStarted(this);
+      if (this.config.onServerStarted) {
+        return this.config.onServerStarted(this);
       }
     });
   }
@@ -237,8 +199,8 @@ export class MochaRemoteServer extends Mocha {
     if (this.client && this.client.readyState === WebSocket.OPEN) {
       // TODO: Send runtime options to the client
       this.send("run");
-    } else if (this.config.callbacks.waitingForClient) {
-      this.config.callbacks.waitingForClient();
+    } else if (this.config.onAwaitingClient) {
+      this.config.onAwaitingClient();
     }
 
     // Return the runner
@@ -276,6 +238,45 @@ export class MochaRemoteServer extends Mocha {
       throw new Error("No client connected");
     }
   }
+
+  private onConnection = (ws: WebSocket) => {
+    debug("Client connected");
+    // Check that the protocol matches
+    const expectedProtocol = `mocha-remote-${this.config.id}`;
+    if (ws.protocol !== expectedProtocol) {
+      // Protocol mismatch - close the connection
+      ws.close(
+        1002,
+        `Expected "${expectedProtocol}" protocol got "${ws.protocol}"`
+      );
+      return;
+    }
+    if (this.client) {
+      debug("A client was already connected");
+      this.client.removeAllListeners();
+      this.client.close(
+        1013 /* try again later */,
+        "Got a connection from another client"
+      );
+      delete this.client;
+    }
+    // Hang onto the client
+    this.client = ws;
+    this.client.on("message", this.onMessage);
+    // Signal that a client has connected
+    if (this.config.onClientConnection) {
+      this.config.onClientConnection(this.client);
+    }
+    // If we already have a runner, it can run now that we have a client
+    if (this.runner) {
+      this.send("run");
+    } else if (this.config.runOnConnection) {
+      debug("Start running tests because a client connected");
+      this.run(() => {
+        debug("Stopped running tests from connection");
+      });
+    }
+  };
 
   private onMessage = (message: string) => {
     const { eventName, args } = parse(message) as IEventMessage;

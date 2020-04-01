@@ -31,11 +31,11 @@ describe("reconnecting client", () => {
     const clientReRunning = new Promise(resolve => {
       let runningCounter = 0;
       client = new MochaRemoteClient({
-        whenInstrumented: mocha => {
+        onInstrumented: mocha => {
           delete require.cache[sampleTestPath];
           mocha.addFile(sampleTestPath);
         },
-        whenRunning: runner => {
+        onRunning: runner => {
           if (runningCounter === 0) {
             runningCounter++;
           } else if (runningCounter === 1) {

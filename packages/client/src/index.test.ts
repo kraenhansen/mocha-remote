@@ -38,7 +38,7 @@ describe("MochaRemoteClient", () => {
         const client = new MochaRemoteClient({
           url,
           retryDelay,
-          whenConnected: () => {
+          onConnected: () => {
             clientConnections++;
             if (clientConnections >= expectedRetries) {
               // Disconnecting should prevent any future reconnects

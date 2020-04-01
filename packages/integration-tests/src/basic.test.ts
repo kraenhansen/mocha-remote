@@ -66,7 +66,7 @@ describe("basic", () => {
       client = new MochaRemoteClient({
         id: "tests",
         url: server.getUrl(),
-        whenRunning: runner => {
+        onRunning: runner => {
           runner.once("end", resolve);
         }
       });
@@ -92,10 +92,8 @@ describe("basic", () => {
         reporter: "base" /* to prevent output */
       },
       {
-        callbacks: {
-          clientConnection: () => {
-            throw new Error("Client connected unexpectedly");
-          }
+        onClientConnection: () => {
+          throw new Error("Client connected unexpectedly");
         },
         id: "a-non-default-id",
         port: 0
@@ -107,7 +105,7 @@ describe("basic", () => {
       // Create a client - which is supposed to run where the tests are running
       client = new MochaRemoteClient({
         url: server.getUrl(),
-        whenDisconnected: ({ code, reason }) => {
+        onDisconnected: ({ code, reason }) => {
           expect(code).to.equal(1002);
           expect(reason).to.equal(
             'Expected "mocha-remote-a-non-default-id" protocol got "mocha-remote-default"'

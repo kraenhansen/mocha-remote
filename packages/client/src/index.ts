@@ -33,13 +33,13 @@ export interface IMochaRemoteClientConfig {
   /** The ID which the server expects */
   id?: string;
   /** Called when the client gets connected to the server */
-  whenConnected?: (ws: WebSocket) => void;
+  onConnected?: (ws: WebSocket) => void;
   /** Called when the client looses connection to the server */
-  whenDisconnected?: (params: IDisconnectedParams) => void;
+  onDisconnected?: (params: IDisconnectedParams) => void;
   /** Called when the client has a new instrumented mocha instance */
-  whenInstrumented?: (mocha: Mocha) => void;
+  onInstrumented?: (mocha: Mocha) => void;
   /** Called when the server has decided to start running */
-  whenRunning?: (runner: Mocha.Runner) => void;
+  onRunning?: (runner: Mocha.Runner) => void;
   /** Called when the client needs a new Mocha instance */
   createMocha: (config: IMochaRemoteClientConfig) => Mocha;
   /** These options are passed to the Mocha constructor when creating a new instance */
@@ -101,8 +101,8 @@ export class MochaRemoteClient {
     this.ws.addEventListener("message", this.onMessage);
     this.ws.addEventListener("open", e => {
       debug(`Connected to ${this.config.url}`);
-      if (this.config.whenConnected) {
-        this.config.whenConnected(e.target as WebSocket);
+      if (this.config.onConnected) {
+        this.config.onConnected(e.target as WebSocket);
       }
       if (fn) {
         fn();
@@ -149,8 +149,8 @@ export class MochaRemoteClient {
       return instrumentedMocha;
     };
     // Notify that a Mocha instance is now instrumented
-    if (this.config.whenInstrumented) {
-      this.config.whenInstrumented(instrumentedMocha);
+    if (this.config.onInstrumented) {
+      this.config.onInstrumented(instrumentedMocha);
     }
     // Add this to the list of instrumented mochas
     return instrumentedMocha;
@@ -163,8 +163,8 @@ export class MochaRemoteClient {
     // Call the original run method
     const runner = mocha.originalRun();
     // Signal that the mocha instance is now running
-    if (this.config.whenRunning) {
-      this.config.whenRunning(runner);
+    if (this.config.onRunning) {
+      this.config.onRunning(runner);
     }
     // Return the runner
     return runner;
@@ -220,8 +220,8 @@ export class MochaRemoteClient {
         this.connect();
       }, this.config.retryDelay) as any) as number;
     }
-    if (this.config.whenDisconnected) {
-      this.config.whenDisconnected({ code, reason });
+    if (this.config.onDisconnected) {
+      this.config.onDisconnected({ code, reason });
     }
   };
 

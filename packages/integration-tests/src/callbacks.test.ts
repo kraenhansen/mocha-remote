@@ -22,41 +22,42 @@ describe("callbacks", () => {
 
     it("calls the callbacks and completes", async () => {
       // Create a server with the a muted reporter
-      const serverStart = new Promise((resolve) => {
-        server = new MochaRemoteServer({
-          reporter: "base",
-        }, {
-          autoStart: true,
-          callbacks: {
-            serverStarted: resolve,
+      const serverStart = new Promise(resolve => {
+        server = new MochaRemoteServer(
+          {
+            reporter: "base"
           },
-        });
+          {
+            autoStart: true,
+            onServerStarted: resolve
+          }
+        );
       });
 
       // Create a promise that resolves when tests finishes
-      const clientRunning = new Promise((resolve) => {
+      const clientRunning = new Promise(resolve => {
         // Create a client - which is supposed to run where the tests are running
         client = new MochaRemoteClient({
-          whenInstrumented: (mocha) => {
+          onInstrumented: mocha => {
             // Bust the cache if any
             delete require.cache[sampleTestPath];
             // Add the test file
             mocha.addFile(sampleTestPath);
           },
-          whenRunning: (runner) => {
+          onRunning: runner => {
             runner.once("end", resolve);
-          },
+          }
         });
       });
 
-      const serverCompleted = new Promise((resolve) => {
-        server.run((failures) => {
+      const serverCompleted = new Promise(resolve => {
+        server.run(failures => {
           expect(failures).to.equal(1);
           resolve();
         });
       });
 
-      return Promise.all([ serverStart, clientRunning, serverCompleted ]);
+      return Promise.all([serverStart, clientRunning, serverCompleted]);
     });
   });
 });
