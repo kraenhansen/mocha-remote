@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "bin": "cli.js",
   "main": "index.js",
@@ -22,8 +22,8 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
-    "mocha-remote-cli": "^0.15.0",
-    "mocha-remote-client": "^0.15.0",
-    "mocha-remote-server": "^0.15.0"
+    "mocha-remote-cli": "^0.16.0",
+    "mocha-remote-client": "^0.16.0",
+    "mocha-remote-server": "^0.16.0"
   }
 }
