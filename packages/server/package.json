@@ -27,8 +27,8 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "flatted": "^2.0.1",
-    "ws": "^7.2.1"
+    "flatted": "^2.0.2",
+    "ws": "^7.2.3"
   },
   "peerDependencies": {
     "mocha": "^6"
