@@ -32,22 +32,22 @@ program
     "default"
   );
 
-program._name = "mocha-remote";
-
 program.parse(process.argv);
+
+const options = program.opts();
 
 // Create a mocha server instance
 const mocha = new MochaRemoteServer(
   {},
   {
     autoStart: false,
-    host: program.hostname,
-    port: parseInt(program.port, 10),
-    id: program.id,
+    host: options.hostname,
+    port: parseInt(options.port, 10),
+    id: options.id,
     onServerStarted: server => {
       const url = server.getUrl();
       console.log(
-        `Mocha Remote Server is listening for clients with id = '${program.id}' on ${url}`
+        `Mocha Remote Server is listening for clients with id = '${options.id}' on ${url}`
       );
     }
   }
@@ -56,8 +56,8 @@ const mocha = new MochaRemoteServer(
 // reporter options
 
 const reporterOptions: { [key: string]: string | boolean } = {};
-if (typeof program.reporterOptions === "string") {
-  program.reporterOptions.split(",").forEach(opt => {
+if (typeof options.reporterOptions === "string") {
+  options.reporterOptions.split(",").forEach(opt => {
     const L = opt.split("=");
     if (L.length > 2 || L.length === 0) {
       throw new Error(`invalid reporter option '${opt}'`);
@@ -71,11 +71,11 @@ if (typeof program.reporterOptions === "string") {
 
 // reporter
 
-mocha.reporter(program.reporter, reporterOptions);
+mocha.reporter(options.reporter, reporterOptions);
 
 // --stack-trace
 
-if (program.fullTrace) {
+if (options.fullTrace) {
   mocha.fullTrace();
 }
 

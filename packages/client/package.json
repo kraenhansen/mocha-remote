@@ -34,11 +34,11 @@
     "isomorphic-ws": "^4.0.1"
   },
   "devDependencies": {
-    "@types/ws": "^6.0.4",
-    "ts-loader": "^6.2.1",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
-    "ws": "^7.2.1"
+    "@types/ws": "^7.4.0",
+    "ts-loader": "^8.0.18",
+    "webpack": "^5.27.2",
+    "webpack-cli": "^4.5.0",
+    "ws": "^7.4.4"
   },
   "peerDependencies": {
     "mocha": "^6"

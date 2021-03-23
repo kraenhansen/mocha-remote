@@ -39,6 +39,13 @@ module.exports = {
     extensions: [".ts", ".tsx", ".js", ".json"],
     alias: {
       mocha: require.resolve("mocha/lib/mocha"),
+    },
+    fallback: {
+      fs: false,
+      path: false,
+      util: false,
+      events: false,
+      stream: false,
     }
   },
   module: {
@@ -49,9 +56,6 @@ module.exports = {
         options: { configFile: "tsconfig.build.json" }
       }
     ]
-  },
-  node: {
-    fs: "empty"
   },
   plugins: [
     new ContextReplacementPlugin({
