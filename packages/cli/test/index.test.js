@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 const { expect } = require("chai");
 const cp = require("child_process");
 const { resolve } = require("path");
@@ -71,6 +73,7 @@ describe("mocha-remote-cli", () => {
           expect(output).to.contain("1 failing");
           done();
         } else {
+          // eslint-disable-next-line no-console
           console.log(output);
           const err = new Error(`Mocha cli closed unexpectedly (code = ${code})`);
           done(err);

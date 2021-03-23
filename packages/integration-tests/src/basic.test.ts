@@ -30,7 +30,7 @@ describe("basic", () => {
     // Create a server - which is supposed to run in Node
     server = new MochaRemoteServer({}, { port: 0 });
     await server.start();
-    const serverConnection = new Promise(resolve => {
+    const serverConnection = new Promise<void>(resolve => {
       (server as any).wss.once("connection", () => {
         resolve();
       });
@@ -43,7 +43,7 @@ describe("basic", () => {
     // Await the client connecting and the server emitting an event
     await Promise.all([
       serverConnection,
-      new Promise(resolve => client.connect(resolve))
+      new Promise<void>(resolve => client.connect(resolve))
     ]);
   });
 
@@ -74,7 +74,7 @@ describe("basic", () => {
       client.instrument(mocha);
     });
 
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       // Asking the server to start the run
       server.run(failures => {
         expect(failures).to.equal(0);
@@ -101,7 +101,7 @@ describe("basic", () => {
     );
     await server.start();
     // Let's instrument the mocha instance and resolve a promise when the tests start
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       // Create a client - which is supposed to run where the tests are running
       client = new MochaRemoteClient({
         url: server.getUrl(),

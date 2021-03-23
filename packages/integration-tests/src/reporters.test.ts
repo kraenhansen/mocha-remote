@@ -102,7 +102,7 @@ describe("reporters", () => {
             // Set the reporter, run and await completion
             const output = ob.enable();
             // Run and await completion
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
               // We're asking the server to start
               server.run(failures => {
                 remoteOutput = output().toString("utf8");

@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { PassThrough } from "stream";
+import { PassThrough } from "stream";
 
 const originalStdoutWrite = global.process.stdout.write;
 
@@ -15,7 +15,7 @@ export const enable = () => {
     buffers.push(chunk);
   });
   // Monkey patch the write method of stdout
-  global.process.stdout.write = stream.write.bind(stream);
+  (global.process.stdout as any).write = stream.write.bind(stream);
   // Return a method
   return () => {
     disable();

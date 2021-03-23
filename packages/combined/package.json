@@ -25,5 +25,10 @@
     "mocha-remote-cli": "^0.16.0",
     "mocha-remote-client": "^0.16.0",
     "mocha-remote-server": "^0.16.0"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true
+    }
   }
 }

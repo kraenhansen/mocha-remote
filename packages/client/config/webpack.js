@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* eslint-disable @typescript-eslint/no-var-requires */
+
 const { dirname, resolve } = require("path");
 const { ContextReplacementPlugin } = require("webpack");
 

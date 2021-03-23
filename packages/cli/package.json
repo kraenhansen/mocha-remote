@@ -37,5 +37,11 @@
   },
   "peerDependencies": {
     "mocha": "^6"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "mocha": true
+    }
   }
 }

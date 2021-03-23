@@ -28,7 +28,7 @@ describe("reconnecting client", () => {
     server = new MochaRemoteServer({ reporter: "base" }, { autoStart: false });
 
     // Create a client - which is supposed to run where the tests are running
-    const clientReRunning = new Promise(resolve => {
+    const clientReRunning = new Promise<void>(resolve => {
       let runningCounter = 0;
       client = new MochaRemoteClient({
         onInstrumented: mocha => {
@@ -58,7 +58,7 @@ describe("reconnecting client", () => {
     // Start the server
     await server.start();
 
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       server.run(failures => {
         expect(failures).to.equal(1);
         resolve();
@@ -73,7 +73,7 @@ describe("reconnecting client", () => {
     await server.start();
 
     // Run again
-    await new Promise(resolve => {
+    await new Promise<void>(resolve => {
       server.run(failures => {
         expect(failures).to.equal(1);
         resolve();

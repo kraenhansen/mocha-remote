@@ -1,3 +1,6 @@
+/* eslint-env browser */
+/* global global */
+
 import "./stdout-shim";
 
 import { MochaRemoteClient } from ".";

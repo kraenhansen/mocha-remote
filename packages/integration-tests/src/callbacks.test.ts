@@ -50,7 +50,7 @@ describe("callbacks", () => {
         });
       });
 
-      const serverCompleted = new Promise(resolve => {
+      const serverCompleted = new Promise<void>(resolve => {
         server.run(failures => {
           expect(failures).to.equal(1);
           resolve();

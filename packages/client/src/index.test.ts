@@ -34,7 +34,7 @@ describe("MochaRemoteClient", () => {
         socket.close();
       });
 
-      await new Promise(resolve => {
+      await new Promise<void>(resolve => {
         const client = new MochaRemoteClient({
           url,
           retryDelay,

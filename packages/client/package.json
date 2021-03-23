@@ -42,5 +42,13 @@
   },
   "peerDependencies": {
     "mocha": "^6"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "sourceType": "module"
+    },
+    "env": {
+      "shared-node-browser": true
+    }
   }
 }

@@ -3,19 +3,19 @@ import { stringify } from "flatted";
 import WebSocket from "isomorphic-ws";
 import Mocha from "mocha";
 
-interface IEventMessage {
+type EventMessage = {
   eventName: string;
-  args: any[];
+  args: unknown[];
 }
 
-interface IDisconnectedParams {
+type DisconnectedParams = {
   code: number;
   reason: string;
 }
 
 export type RunCallback = (runner: Mocha.Runner) => void;
 
-interface IInstrumentedMocha extends Mocha {
+export interface InstrumentedMocha extends Mocha {
   originalRun: (fn?: (failures: number) => void) => Mocha.Runner;
   onRun?: RunCallback;
 }
@@ -35,7 +35,7 @@ export interface IMochaRemoteClientConfig {
   /** Called when the client gets connected to the server */
   onConnected?: (ws: WebSocket) => void;
   /** Called when the client looses connection to the server */
-  onDisconnected?: (params: IDisconnectedParams) => void;
+  onDisconnected?: (params: DisconnectedParams) => void;
   /** Called when the client has a new instrumented mocha instance */
   onInstrumented?: (mocha: Mocha) => void;
   /** Called when the server has decided to start running */
@@ -74,7 +74,7 @@ export class MochaRemoteClient {
 
   private config: IMochaRemoteClientConfig;
   private ws?: WebSocket;
-  private instrumentedMocha?: IInstrumentedMocha;
+  private instrumentedMocha?: InstrumentedMocha;
   private retryTimeout?: number;
 
   constructor(config: Partial<IMochaRemoteClientConfig> = {}) {
@@ -86,7 +86,7 @@ export class MochaRemoteClient {
     }
   }
 
-  public connect(fn?: () => void) {
+  public connect(fn?: () => void): void {
     if (this.ws) {
       throw new Error("Already connected");
     }
@@ -110,7 +110,7 @@ export class MochaRemoteClient {
     });
   }
 
-  public disconnect() {
+  public disconnect(): void {
     // Prevent a timeout from reconnecting
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
@@ -129,8 +129,8 @@ export class MochaRemoteClient {
     }
   }
 
-  public instrument(mocha: Mocha) {
-    const instrumentedMocha = mocha as IInstrumentedMocha;
+  public instrument(mocha: Mocha): InstrumentedMocha {
+    const instrumentedMocha = mocha as InstrumentedMocha;
     // Hang on to this instance
     this.instrumentedMocha = instrumentedMocha;
     // Monkey patch the run method
@@ -142,7 +142,7 @@ export class MochaRemoteClient {
     };
     // The reporter method might require files that do not exist when required from a bundle
     instrumentedMocha.reporter = () => {
-      // tslint:disable-next-line:no-console
+      // eslint-disable-next-line no-console
       console.warn(
         "This Mocha instance is instrumented by mocha-remote-client, setting a reporter has no effect"
       );
@@ -156,7 +156,7 @@ export class MochaRemoteClient {
     return instrumentedMocha;
   }
 
-  public run(mocha: IInstrumentedMocha): Mocha.Runner {
+  public run(mocha: InstrumentedMocha): Mocha.Runner {
     // Monkey patch the reporter to a method before running
     const reporter = this.createReporter();
     (mocha as any)._reporter = reporter;
@@ -170,7 +170,7 @@ export class MochaRemoteClient {
     return runner;
   }
 
-  public getMocha(): IInstrumentedMocha {
+  public getMocha(): InstrumentedMocha {
     if (this.instrumentedMocha) {
       // Use the latest instrumented mocha instance - if it exists
       return this.instrumentedMocha;
@@ -181,7 +181,7 @@ export class MochaRemoteClient {
     }
   }
 
-  private send(eventName: string, ...args: any[]) {
+  private send(eventName: string, ...args: unknown[]) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const preparedArgs = this.prepareArgs(args);
       const data = stringify({ eventName, args: preparedArgs });
@@ -197,7 +197,7 @@ export class MochaRemoteClient {
       // Stringifing an Error doesn't extract the message or stacktrace
       // @see https://stackoverflow.com/a/18391400/503899
       if (arg instanceof Error) {
-        const result: { [k: string]: any } = {};
+        const result: { [k: string]: unknown } = {};
         Object.getOwnPropertyNames(arg).forEach(key => {
           result[key] = (arg as any)[key];
         });
@@ -208,7 +208,7 @@ export class MochaRemoteClient {
     });
   }
 
-  private onClose = ({ code, reason }: IDisconnectedParams) => {
+  private onClose = ({ code, reason }: DisconnectedParams) => {
     debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
     // Forget about the client
     delete this.ws;
@@ -218,7 +218,7 @@ export class MochaRemoteClient {
       debug(`Re-connecting in ${this.config.retryDelay}ms`);
       this.retryTimeout = (setTimeout(() => {
         this.connect();
-      }, this.config.retryDelay) as any) as number;
+      }, this.config.retryDelay) as unknown) as number;
     }
     if (this.config.onDisconnected) {
       this.config.onDisconnected({ code, reason });
@@ -234,7 +234,7 @@ export class MochaRemoteClient {
   };
 
   private onMessage = (event: { data: string }) => {
-    const data = JSON.parse(event.data) as IEventMessage;
+    const data = JSON.parse(event.data) as EventMessage;
     debug(`Received a '${data.eventName}' message`);
     if (data.eventName === "run") {
       // TODO: Receive runtime options from the server and set these on the instrumented mocha instance before running
@@ -244,9 +244,9 @@ export class MochaRemoteClient {
     }
   };
 
-  private createReporter() {
+  private createReporter(): typeof Mocha.reporters.Base {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const client = this;
-    // tslint:disable-next-line:max-classes-per-file
     return class extends Mocha.reporters.Base {
       constructor(runner: Mocha.Runner) {
         super(runner);

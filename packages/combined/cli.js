@@ -1,4 +1,5 @@
 #!/usr/bin/env node
 
-// tslint:disable-next-line:no-var-requires
+/* eslint-env node */
+
 require("mocha-remote-cli");

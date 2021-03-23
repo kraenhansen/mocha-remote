@@ -4,17 +4,7 @@ import program from "commander";
 
 import { MochaRemoteServer } from "mocha-remote-server";
 
-// tslint:disable:no-console
-
-/**
- * Exits Mocha when tests + code under test has finished execution (default)
- * @param {number} code - Exit code; typically # of failures
- */
-const exitLater = (code: number) => {
-  process.on("exit", () => {
-    process.exit(Math.min(code, 255));
-  });
-};
+/* eslint-disable no-console */
 
 program
   .version(
