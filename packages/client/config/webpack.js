@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
 const { dirname, resolve } = require("path");
-const { ContextReplacementPlugin } = require("webpack");
+const { ContextReplacementPlugin, DefinePlugin } = require("webpack");
 
 const MOCHA_LIB_PATH = resolve(dirname(require.resolve("mocha")), "lib");
 const IGNORED_MOCHA_LINES = [
@@ -35,6 +35,10 @@ module.exports = {
     maxEntrypointSize: 400000,
     maxAssetSize: 400000,
   },
+  optimization: {
+    // No real need for minification
+    minimize: false
+  },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".json"],
     alias: {
@@ -43,9 +47,10 @@ module.exports = {
     fallback: {
       fs: false,
       path: false,
-      util: false,
       events: false,
-      stream: false,
+      util: require.resolve("util/"),
+      stream: require.resolve("stream-browserify"),
+      buffer: require.resolve("buffer/"),
     }
   },
   module: {
@@ -58,6 +63,9 @@ module.exports = {
     ]
   },
   plugins: [
+    new DefinePlugin({
+      "process.browser": true
+    }),    
     new ContextReplacementPlugin({
       test: p => p === MOCHA_LIB_PATH,
     }, context => {

@@ -6,10 +6,9 @@
     "android": "react-native run-android && mocha-remote",
     "ios": "react-native run-ios && mocha-remote",
     "lint": "eslint .",
-    "preinstall": "npm pack ../../../../client && mv mocha-remote-client-*.tgz mocha-remote-client.tgz"
+    "install": "install-local"
   },
   "dependencies": {
-    "mocha-remote-client": "file:mocha-remote-client.tgz",
     "react": "16.9.0",
     "react-native": "0.61.5"
   },
@@ -22,5 +21,8 @@
     "metro-react-native-babel-preset": "^0.56.0",
     "mocha": "^5",
     "mocha-remote-cli": "^0.14.1"
+  },
+  "localDependencies": {
+    "mocha-remote-client": "../../../../client"
   }
 }

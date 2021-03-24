@@ -25,11 +25,11 @@ import { MochaRemoteClient } from "mocha-remote-client";
 ```
 
 Then create a mocha remote client - when the server asks the client to create a new Mocha instance the
-`whenInstrumented` callback provided in the config will be called. Setup the globals and require the tests there.
+`onInstrumented` callback provided in the config will be called. Setup the globals and require the tests there.
 
 ```
 const client = new MochaRemoteClient({
-  whenInstrumented: (mocha) => {
+  onInstrumented: (mocha) => {
     // Set the title of the root suite
     mocha.suite.title = `React-Native on ${Platform.OS}`;
     // This will setup the mocha globals (describe, it, etc.)
