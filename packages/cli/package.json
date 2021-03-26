@@ -36,7 +36,7 @@
     "@types/node": "^10"
   },
   "peerDependencies": {
-    "mocha": "^6"
+    "mocha": "^8"
   },
   "eslintConfig": {
     "env": {

@@ -1,0 +1,39 @@
+{
+  "name": "mocha-remote-mocha",
+  "version": "0.16.0",
+  "private": true,
+  "description": "An internal simplified version of Mocha to be used from a client",
+  "scripts": {
+    "build": "webpack",
+    "prepare": "npm run build"
+  },
+  "main": "dist/mocha.bundle.js",
+  "types": "index.d.ts",
+  "author": {
+    "name": "Kræn Hansen",
+    "email": "mail@kraenhansen.dk",
+    "url": "https://github.com/kraenhansen"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.2.2",
+    "util": "^0.12.3",
+    "webpack": "^5.28.0",
+    "webpack-cli": "^4.5.0"
+  },
+  "peerDependency": {
+    "debug": "^4"
+  },
+  "eslintConfig": {
+    "env": {
+      "commonjs": true
+    },
+    "overrides": [
+      {
+        "files": "webpack.config.js",
+        "env": {
+          "node": true
+        }
+      }
+    ]
+  }
+}

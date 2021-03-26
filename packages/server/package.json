@@ -31,6 +31,6 @@
     "ws": "^7.4.4"
   },
   "peerDependencies": {
-    "mocha": "^6"
+    "mocha": "^8"
   }
 }

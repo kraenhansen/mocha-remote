@@ -230,9 +230,9 @@ export class MochaRemoteServer extends Mocha {
     }
   }
 
-  public send(eventName: string, ...args: unknown[]): void {
+  public send(action: string, ...args: unknown[]): void {
     if (this.client && this.client.readyState === WebSocket.OPEN) {
-      const data = JSON.stringify({ eventName, args });
+      const data = JSON.stringify({ action, args });
       this.client.send(data);
     } else {
       throw new Error("No client connected");
