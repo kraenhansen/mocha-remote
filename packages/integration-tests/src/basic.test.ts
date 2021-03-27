@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import Mocha from "mocha";
 
-import { MochaRemoteClient } from "mocha-remote-client";
-import { MochaRemoteServer } from "mocha-remote-server";
+import { Client } from "mocha-remote-client";
+import { Server } from "mocha-remote-server";
 
 import { MockedMocha } from "./utils";
 
 describe("basic", () => {
-  let server: MochaRemoteServer;
-  let client: MochaRemoteClient;
+  let server: Server;
+  let client: Client;
 
   afterEach(async () => {
     if (client) {
@@ -21,14 +21,14 @@ describe("basic", () => {
 
   it("starts on 8090", async () => {
     // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer();
+    server = new Server();
     await server.start();
     expect(server.getUrl()).to.equal("ws://0.0.0.0:8090");
   });
 
   it("connects", async () => {
     // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer({}, { port: 0 });
+    server = new Server({ port: 0 });
     await server.start();
     const serverConnection = new Promise<void>(resolve => {
       (server as any).wss.once("connection", () => {
@@ -36,42 +36,37 @@ describe("basic", () => {
       });
     });
     // Create a client - which is supposed to run where the tests are running
-    client = new MochaRemoteClient({
+    client = new Client({
       autoConnect: false,
       url: server.getUrl()
     });
     // Await the client connecting and the server emitting an event
     await Promise.all([
       serverConnection,
-      new Promise<void>(resolve => client.connect(resolve))
+      client.connect()
     ]);
   });
 
   it("can start client from the server", async () => {
     // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer(
-      {
-        reporter: "base" /* to prevent output */
-      },
-      {
-        id: "tests",
-        port: 0
-      }
-    );
+    server = new Server({
+      reporter: "base", // to prevent output
+      id: "tests",
+      port: 0
+    });
     await server.start();
 
+    // Create a client - which is supposed to run where the tests are running
+    client = new Client({
+      id: "tests",
+      url: server.getUrl(),
+      tests: () => {
+        it("works");
+      },
+    });
     // Let's instrument the mocha instance and resolve a promise when the tests start
     const clientRunningPromise = new Promise(resolve => {
-      // Create a client - which is supposed to run where the tests are running
-      client = new MochaRemoteClient({
-        id: "tests",
-        url: server.getUrl(),
-        onRunning: runner => {
-          runner.once("end", resolve);
-        }
-      });
-      const mocha = new MockedMocha() as Mocha;
-      client.instrument(mocha);
+      client.once("running", resolve);
     });
 
     await new Promise<void>(resolve => {
@@ -87,32 +82,29 @@ describe("basic", () => {
 
   it("disconnects the client if ids mismatch", async () => {
     // Create a server - which is supposed to run in Node
-    server = new MochaRemoteServer(
-      {
-        reporter: "base" /* to prevent output */
-      },
-      {
-        onClientConnection: () => {
-          throw new Error("Client connected unexpectedly");
-        },
-        id: "a-non-default-id",
-        port: 0
-      }
-    );
+    server = new Server({
+      reporter: "base", /* to prevent output */
+      id: "a-non-default-id",
+      port: 0
+    });
+    // Throw if a client connects
+    server.once("connection", () => {
+      throw new Error("Client connected unexpectedly");
+    })
     await server.start();
     // Let's instrument the mocha instance and resolve a promise when the tests start
     await new Promise<void>(resolve => {
       // Create a client - which is supposed to run where the tests are running
-      client = new MochaRemoteClient({
+      client = new Client({
         url: server.getUrl(),
-        onDisconnected: ({ code, reason }) => {
-          expect(code).to.equal(1002);
-          expect(reason).to.equal(
-            'Expected "mocha-remote-a-non-default-id" protocol got "mocha-remote-default"'
-          );
-          resolve();
-        }
       });
+      client.once("disconnect", ({ code, reason }) => {
+        expect(code).to.equal(1002);
+        expect(reason).to.equal(
+          'Expected "mocha-remote-a-non-default-id" protocol got "mocha-remote-default"'
+        );
+        resolve();
+      })
     });
   });
 });

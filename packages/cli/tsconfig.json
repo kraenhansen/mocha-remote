@@ -1,19 +1,12 @@
 {
-  "extends": "../../configs/tsconfig.json",
   "compilerOptions": {
-    "typeRoots": [
-      "./types",
-      "../../types",
-      "./node_modules/@types",
-      "../../node_modules/@types"
-    ],
-    "types": [
-      "commander",
-      "debug",
-      "node"
-    ]
-  },
-  "include": [
-    "src/**/*.ts"
-  ],
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
 }

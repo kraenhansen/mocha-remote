@@ -1,112 +1,182 @@
 import fs from "fs";
 import path from "path";
-import program from "commander";
+import yargs from "yargs/yargs";
+import { hideBin } from "yargs/helpers";
+import cp from "child_process";
+import chalk from "chalk";
 
-import { MochaRemoteServer } from "mocha-remote-server";
+const packageJsonPath = path.join(__dirname, "..", "package.json");
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-/* eslint-disable no-console */
+import { Server, ReporterOptions, WebSocket } from "mocha-remote-server";
 
-program
-  .version(
-    JSON.parse(
-      fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8")
-    ).version
-  )
-  .usage("[options]")
-  .option("-O, --reporter-options <k=v,k2=v2,...>", "reporter-specific options")
-  .option("-R, --reporter <name>", "specify the reporter to use", "spec")
-  .option("--full-trace", "display the full stack trace")
-  .option(
-    "-H, --hostname [hostname]",
-    "specify the hostname that the Mocha Remote Server will listen to",
-    "0.0.0.0"
-  )
-  .option(
-    "-P, --port [port]",
-    "specify the port that the Mocha Remote Server will listen to",
-    "8090"
-  )
-  .option(
-    "-I, --id [id]",
-    "specify the id the clients will use to connect",
-    "default"
-  );
+type ParserOptions = { [key: string]: string |true };
 
-program.parse(process.argv);
-
-const options = program.opts();
-
-// Create a mocha server instance
-const mocha = new MochaRemoteServer(
-  {},
-  {
-    autoStart: false,
-    host: options.hostname,
-    port: parseInt(options.port, 10),
-    id: options.id,
-    onServerStarted: server => {
-      const url = server.getUrl();
-      console.log(
-        `Mocha Remote Server is listening for clients with id = '${options.id}' on ${url}`
-      );
-    }
-  }
-);
-
-// reporter options
-
-const reporterOptions: { [key: string]: string | boolean } = {};
-if (typeof options.reporterOptions === "string") {
-  options.reporterOptions.split(",").forEach(opt => {
-    const L = opt.split("=");
-    if (L.length > 2 || L.length === 0) {
+function parseParserOptions(opts: string[]) {
+  return opts.reduce((acc, opt) => {
+    const pair = opt.split('=');
+    if (pair.length > 2 || !pair.length) {
       throw new Error(`invalid reporter option '${opt}'`);
-    } else if (L.length === 2) {
-      reporterOptions[L[0]] = L[1];
-    } else {
-      reporterOptions[L[0]] = true;
     }
-  });
+
+    acc[pair[0]] = pair.length === 2 ? pair[1] : true;
+    return acc;
+  }, {} as ParserOptions)
 }
-
-// reporter
-
-mocha.reporter(options.reporter, reporterOptions);
-
-// --stack-trace
-
-if (options.fullTrace) {
-  mocha.fullTrace();
-}
-
-// let runner;
 
 // Start the server
-async function startServerAndRun(): Promise<number> {
-  await mocha.start();
+export async function run(server: Server, command?: string[]): Promise<number> {
+  await server.start();
   // User stopping the process in a terminal
   process.on("SIGINT", () => {
-    // runner.abort();
-    mocha.stop().then(undefined, err => {
-      console.error(`Failed to stop the Mocha Remote Server: ${err.message}`);
+    server.stop().then(undefined, err => {
+      /* eslint-disable-next-line no-console */
+      console.error(chalk.red("ERROR"), `Failed to stop server: ${err.message}`);
     });
-
-    // This is a hack:
-    // Instead of `process.exit(130)`, set runner.failures to 130 (exit code for SIGINT)
-    // The amount of failures will be emitted as error code later
-    // runner.failures = 130;
   });
 
+  if (command) {
+    const [commandName, ...args] = command;
+    const commandProcess = cp.spawn(commandName, args, {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        MOCHA_REMOTE_URL: server.getUrl(),
+      }
+    });
+    /* eslint-disable-next-line no-console */
+    console.log(
+      chalk.dim(`Running command: ${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`),
+      '\n'
+    );
+    // We should exit when the command process exits - and vise versa
+    commandProcess.once("exit", (code) => {
+      /* eslint-disable-next-line no-console */
+      console.log('\n' + chalk.dim(`Command exited (status = ${typeof code === "number" ? code : 'unknown'})`));
+      if (typeof code === "number") {
+        process.exit(code);
+      } else {
+        // This is unexpected
+        process.exit(1);
+      }
+    });
+    process.on("SIGINT", () => {
+      commandProcess.kill("SIGINT");
+    });
+  }
+
   // Start the runner
-  return new Promise(resolve => mocha.run(resolve));
+  return new Promise(resolve => server.run(resolve));
 }
 
-startServerAndRun().then(
-  failures => {
-    process.exit(failures);
-  },
-  err => {
-    console.error("Failed to stop the Mocha Remote Server", err.message);
-    process.exit(1);
+let connectionCount = 0;
+const connections = new WeakMap<WebSocket, number>();
+function displayClient(ws: WebSocket) {
+  let connectionIndex = connections.get(ws);
+  if (typeof connectionIndex !== "number") {
+    connectionIndex = connectionCount++;
+    connections.set(ws, connectionIndex);
   }
-);
+  return chalk.dim(`[${connectionIndex}]`);
+}
+
+if (module.parent === null) {
+  const logo = chalk.dim(fs.readFileSync(path.resolve(__dirname, '../logo.txt')));
+  /* eslint-disable-next-line no-console */
+  console.log(logo);
+
+  const argv = yargs(hideBin(process.argv))
+    .scriptName('mocha-remote')
+    .version('version', 'Show version number & exit', packageJson.version)
+    .alias('v', 'version')
+    .option('hostname', {
+      description: 'Network hostname to use when listening for clients',
+      default: '0.0.0.0',
+      alias: 'H',
+    })
+    .option('port', {
+      description: 'Network port to use when listening for clients',
+      default: 8090,
+      alias: 'P',
+    })
+    .option('id', {
+      description: 'Connections not matching this will be closed',
+      default: 'default',
+      alias: 'I',
+    })
+    .option('reporter', {
+      description: 'Specify reporter to use',
+      alias: 'R',
+      default: 'spec',
+    })
+    .option('reporter-option', {
+      description: 'Reporter-specific options (<k=v,[k1=v1,..]>)',
+      type: 'array',
+      coerce: parseParserOptions,
+      alias: ['O', 'reporter-options'],
+    })
+    .help(true)
+    .alias('h', 'help')
+    .argv
+
+  // Create a mocha server instance
+  const server = new Server({
+    autoStart: false,
+    host: argv.hostname,
+    port: argv.port,
+    id: argv.id,
+    reporter: argv.reporter,
+    reporterOptions: argv.reporterOption as ReporterOptions,
+  });
+
+  server.on('started', server => {
+    const url = server.getUrl();
+    /* eslint-disable-next-line no-console */
+    console.log(
+      chalk.green("LISTENING"),
+      `on ${chalk.bold(url)}`,
+      `for clients with id = ${chalk.bold(argv.id)}`
+    );
+  })
+
+  server.on("connection", (ws, req) => {
+    /* eslint-disable-next-line no-console */
+    console.log(
+      displayClient(ws),
+      chalk.green("CONNECTION"),
+      `from ${req.socket.remoteAddress + ':' + req.socket.remotePort}`,
+    );
+  });
+
+  server.on("disconnection", (ws, code, reason) => {
+    /* eslint-disable-next-line no-console */
+    console.warn(
+      displayClient(ws),
+      chalk.yellow("DISCONNECTION"),
+      `${reason || "for no particular reason"} (code = ${code})`,
+    );
+  });
+
+  server.on("error", (error) => {
+    /* eslint-disable-next-line no-console */
+    console.error(
+      chalk.red("ERROR"),
+      `${error.message || "Missing a message"}`,
+    );
+  });
+
+  // Extract any command following "--"
+  const commandStart = process.argv.indexOf("--");
+  const command = commandStart !== -1 ? process.argv.slice(commandStart + 1) : undefined;
+
+  run(server, command).then(
+    failures => {
+      process.exit(failures);
+    },
+    err => {
+      /* eslint-disable-next-line no-console */
+      console.error(chalk.red("ERROR"), err.message);
+      process.exit(1);
+    }
+  );
+}

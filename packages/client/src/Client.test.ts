@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import ws from "ws";
 
-import { Client, Runner } from './Client';
+import { Runner } from ".";
+import { Client } from './Client';
 
 describe("Mocha Remote Client", () => {
   it("constructs", () => {
@@ -96,7 +97,7 @@ describe("Mocha Remote Client", () => {
   });
 
 
-  describe("reconnecting", () => {
+  describe("connecting", () => {
     let wss: ws.Server;
     let url: string;
 
@@ -126,19 +127,17 @@ describe("Mocha Remote Client", () => {
       });
 
       await new Promise<void>(resolve => {
-        const client = new Client({
-          url,
-          reconnectDelay,
-          onConnected: () => {
-            clientConnections++;
-            if (clientConnections >= expectedRetries) {
-              // Disconnecting should prevent any future reconnects
-              client.disconnect();
-              resolve();
-            }
-          },
-          // TODO: Test that errors are reported
+        const client = new Client({ url, reconnectDelay });
+        // Count connections
+        client.on("connect", () => {
+          clientConnections++;
+          if (clientConnections >= expectedRetries) {
+            // Disconnecting should prevent any future reconnects
+            client.disconnect();
+            resolve();
+          }
         });
+        // TODO: Test that errors are reported
       });
 
       // Wait for any new reconnects ...
@@ -149,13 +148,12 @@ describe("Mocha Remote Client", () => {
     });
 
     it("runs tests when asked", async () => {
-
       wss.on("connection", ws => {
         ws.send(JSON.stringify({ action: "run", options: { grep: "will" } }));
       });
 
       const failures = await new Promise<number>(resolve => {
-        new Client({
+        const client = new Client({
           url,
           autoReconnect: false,
           tests: () => {
@@ -166,15 +164,62 @@ describe("Mocha Remote Client", () => {
               throw new Error("Unexpected failure");
             });
           },
-          onRunning: runner => {
-            runner.once(Runner.constants.EVENT_RUN_END, () => {
-              resolve(runner.failures);
-            });
-          }
         });
+        // Resolve once the tests have ended
+        client.once("end", resolve);
       });
 
       expect(failures).equals(1);
+    });
+
+    it("emits error when connetion fails", async () => {
+      // Close the server right away to provoke a connection failure
+      wss.close();
+      await new Promise<void>(resolve => {
+        const client = new Client({ url });
+        client.once("error", err => {
+          expect(err).instanceof(Error);
+          expect(err.message.startsWith("connect ECONNREFUSED"));
+          resolve();
+        });
+      });
+    });
+
+    it("emits error on malformed messages", async () => {
+      wss.on("connection", ws => {
+        ws.send('');
+        ws.send('{}');
+        ws.send('{ "action": "unexpected" }');
+        ws.send('{ "action": "run" }');
+        ws.send('{ "action": "error" }');
+      });
+
+      const EXPECTED_MESSAGES = [
+        "Unexpected end of JSON input",
+        "Expected an action property",
+        "Unexpected action 'unexpected'",
+        "Expected an options object on 'run' actions",
+        "Expected 'error' action to have an error argument with a message"
+      ];
+
+      const messages: string[] = [];
+
+      await new Promise<void>(resolve => {
+        const client = new Client({ url });
+        client.once("error", err => {
+          expect(err).instanceof(Error);
+          messages.push(err.message);
+          // Disconnect when all messages have been received
+          if (messages.length >= EXPECTED_MESSAGES.length) {
+            client.disconnect();
+          }
+        });
+        client.once("disconnect", () => {
+          resolve();
+        });
+      });
+
+      expect(messages).deep.equals(EXPECTED_MESSAGES);
     });
   });
 });

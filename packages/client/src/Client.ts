@@ -1,7 +1,11 @@
 import { Context, Runner, Suite, interfaces, Interface } from "mocha-remote-mocha";
-export { Context, Runner, Suite, interfaces, Interface };
+import type { EventEmitter } from "events";
+
+import type { ServerMessage } from "../../../types/server";
+import type { ClientMessage, MochaConfig } from "../../../types/client";
 
 import { extend } from "./debug";
+import { ClientEventEmitter, ClientEvents, DisconnectParams } from "./ClientEventEmitter";
 
 const debug = extend("Client");
 
@@ -11,29 +15,17 @@ const {
   EVENT_FILE_REQUIRE
 } = Suite.constants;
 
-type DisconnectParams = {
-  code: number;
-  reason: string;
-}
-
 type CustomInterface = (rootSuite: Suite) => void;
 type InterfaceConfig = Interface | CustomInterface;
 
 type InternalSuite = Suite & { reset: () => void };
 type InternalRunner = Runner & { runAsync: (arg: { options: Partial<MochaOptions> }) => Promise<number> };
 
-type RunMessage = { action: "run", options: Partial<MochaOptions> };
-type IncomingMessage = RunMessage;
+class MalformedMessageError extends Error {}
 
 // TODO: Receive these from the server
 type MochaOptions = {
-  grep: RegExp;
-  delay: boolean;
-  invert: boolean;
-};
-
-type MochaConfig = {
-  grep?: RegExp | string;
+  grep?: RegExp;
   delay?: boolean;
   invert?: boolean;
 };
@@ -48,9 +40,6 @@ export type ClientConfig = {
   reconnectDelay: number;
   ui: InterfaceConfig;
   tests(): void,
-  onConnected(ws: WebSocket): void,
-  onDisconnected(params: DisconnectParams): void,
-  onRunning(runner: Runner): void,
 } & MochaConfig;
 
 export enum ClientState {
@@ -59,13 +48,26 @@ export enum ClientState {
   RUNNING = "running",
 }
 
-export class Client {
+export class Client extends ClientEventEmitter {
 
   public static WebSocket: typeof WebSocket;
+  public static EventEmitter: typeof EventEmitter;
+  public static DEFAULT_CONFIG: ClientConfig = {
+    autoConnect: true,
+    autoReconnect: true,
+    id: "default",
+    title: "",
+    reconnectDelay: 1000,
+    url: "ws://localhost:8090",
+    ui: "bdd",
+    tests: () => {
+      throw new Error("You must configure an `tests` function");
+    },
+  }
 
-  private static createRootSuite() {
+  private static createRootSuite(title: string) {
     const context = new Context();
-    const suite = new Suite('', context);
+    const suite = new Suite(title, context);
     suite.root = true;
     return suite;
   }
@@ -83,24 +85,9 @@ export class Client {
     }
   }
 
-  private static DEFAULT_CONFIG: ClientConfig = {
-    autoConnect: true,
-    autoReconnect: true,
-    id: "default",
-    title: "Mocha Remote",
-    reconnectDelay: 1000,
-    url: "ws://localhost:8090",
-    ui: "bdd",
-    tests: () => {
-      throw new Error("You must configure an `tests` function");
-    },
-    onConnected: () => { /* */ },
-    onDisconnected: () => { /* */ },
-    onRunning: () => { /* */ },
-  }
-
   public readonly config: ClientConfig;
-  public readonly suite: Suite = Client.createRootSuite();
+  public readonly suite: Suite;
+
   private previousRunner?: Runner;
   private options: Partial<MochaOptions> = {};
   private _state = ClientState.DISCONNECTED;
@@ -108,10 +95,10 @@ export class Client {
   private reconnectTimeout?: ReturnType<typeof setTimeout>;
 
   constructor(config: Partial<ClientConfig> = {}) {
-    debug("Constructed a client");
-    this.config = { 
-      ...Client.DEFAULT_CONFIG, ...config,
-    };
+    super(Client.EventEmitter);
+    debug("Constructing a client");
+    this.config = {  ...Client.DEFAULT_CONFIG, ...config };
+    this.suite = Client.createRootSuite(this.config.title);
     this.grep(this.config.grep);
     this.bindInterface();
     if (this.config.autoConnect) {
@@ -129,40 +116,46 @@ export class Client {
       debug(`Connecting to ${ws.url}`);
       this.ws = ws;
 
+      const errorBeforeConnection = (e: Event) => reject(e);
+
       ws.addEventListener("close", ({ code, reason }: DisconnectParams) => {
         debug(`Connection closed: ${reason || "No reason"} (code=${code})`);
-        if (this._state !== ClientState.DISCONNECTED) {
-          // Forget about the client
-          delete this.ws;
-          // TODO: Consider if there's a way to stop all active runners
-          this._state = ClientState.DISCONNECTED;
+        // Forget about the client
+        delete this.ws;
+        // Attempt a reconnect
+        if (this.config.autoReconnect && this._state !== ClientState.DISCONNECTED) {
           // Try reconnecting
-          if (code !== 1000 && this.config.autoReconnect) {
+          if (code !== 1000) {
             // Try to reconnect
             debug(`Re-connecting in ${this.config.reconnectDelay}ms`);
             this.reconnectTimeout = setTimeout(() => {
               this.connect();
             }, this.config.reconnectDelay);
           }
-          if (this.config.onDisconnected) {
-            this.config.onDisconnected({ code, reason });
-          }
         }
+        // TODO: Consider if there's a way to stop all active runners
+        this._state = ClientState.DISCONNECTED;
+        // Tell the world
+        this.emit("disconnect", { code, reason });
       });
 
       ws.addEventListener("message", this.handleMessage);
 
-      ws.addEventListener("error", e => {
-        // const err = new Error(`Failed to connect (${e.error})`);
-        console.error(e);
+      ws.addEventListener("error", event => {
+        const { message } = event as ErrorEvent;
+        this.emit(ClientEvents.ERROR, new Error(message));
       });
       
-      ws.addEventListener("open", e => {
+      ws.addEventListener("open", () => {
         debug(`Connected to ${ws.url}`);
         this._state = ClientState.CONNECTED;
-        this.config.onConnected(ws);
+        // No need to track errors before connection
+        ws.removeEventListener("error", errorBeforeConnection);
+        this.emit("connect", ws);
         resolve();
       });
+
+      ws.addEventListener("error", errorBeforeConnection);
     })
   }
 
@@ -195,8 +188,8 @@ export class Client {
     debug("Loaded tests", this.suite);
   }
 
-  public run(fn?: (failures: number) => void, runOptions: Partial<MochaOptions> = {} ): Runner {
-    debug("Running tests");
+  public run(fn?: (failures: number) => void, runOptions: MochaOptions = {} ): Runner {
+    debug("Preparing to run test suite");
     this._state = ClientState.RUNNING;
     if (this.previousRunner) {
       this.previousRunner.dispose();
@@ -204,14 +197,15 @@ export class Client {
     }
     this.loadFile();
     const runner = new Runner(this.suite, false);
-    const options = {
-      ...this.mockedMocha.options,
-      ...runOptions,
-    };
+    const options = { ...this.mockedMocha.options, ...runOptions };
 
     if (options.grep) {
       runner.grep(options.grep, options.invert || false);
     }
+
+    const runAsync = async (runner: InternalRunner) => {
+      return runner.runAsync({ options });
+    };
 
     const done = (failures: number) => {
       debug(`Completed running (${failures} failures)`);
@@ -223,13 +217,14 @@ export class Client {
       }
     };
 
-    const runAsync = async (runner: InternalRunner) => {
-      return runner.runAsync({ options });
-    };
-
+    debug("Running test suite");
     runAsync(runner as InternalRunner).then(done);
 
-    this.config.onRunning(runner);
+    this.emit("running", runner);
+
+    runner.once(Runner.constants.EVENT_RUN_END, () => {
+      this.emit("end", runner.failures);
+    });
 
     return runner;
   }
@@ -244,31 +239,56 @@ export class Client {
   }
 
   private handleMessage = (event: { data: string }) => {
-    const data: IncomingMessage = JSON.parse(event.data);
-    debug(`Received a '${data.action}' message`);
-    if (data.action === "run") {
-      const options = {
-        grep: Client.parseGrep(data.options.grep)
+    try {
+      const msg = JSON.parse(event.data) as ClientMessage;
+      if (typeof msg.action !== "string") {
+        throw new MalformedMessageError("Expected an action property");
       }
-      this.run(() => {
-        // TODO: Perhaps we should disconnect?
-      }, options);
-    } else {
-      console.warn(`Remote Mocha Client received an unexpected message: ${data.action}`);
+
+      debug(`Received a '${msg.action}' message`);
+      if (msg.action === "run") {
+        if (typeof msg.options !== "object") {
+          throw new MalformedMessageError("Expected an options object on 'run' actions");
+        }
+        const parsedOptions: MochaOptions = {
+          grep: Client.parseGrep(msg.options.grep)
+        }
+        this.run(() => {
+          // TODO: Perhaps we should disconnect?
+        }, parsedOptions);
+      } else if (msg.action === "error") {
+        if (typeof msg.message === "string") {
+          this.emit("error", new Error(msg.message));
+        } else {
+          throw new MalformedMessageError("Expected 'error' action to have an error argument with a message");
+        }
+      } else {
+        const { action } = msg;
+        throw new MalformedMessageError(`Unexpected action '${action}'`);
+      }
+    } catch (err) {
+      if (err instanceof MalformedMessageError || err instanceof SyntaxError) {
+        debug(`Remote Mocha Client received a malformed message: ${err.message}`);
+        this.send({ action: "error", message: err.message });
+        this.emit("error", err);
+      } else {
+        this.emit("error", err);
+        throw err;
+      }
     }
   };
 
-  private send(eventName: string, ...args: unknown[]) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+  private send(msg: ServerMessage) {
+    if (this.ws && this.ws.readyState === Client.WebSocket.OPEN) {
       /*
       const preparedArgs = this.prepareArgs(args);
       const data = stringify({ eventName, args: preparedArgs });
-      debug(`Sending a '${eventName}' message`);
-      this.ws.send(data);
       */
-      throw new Error("Not yet implemented");
+      debug(`Sending a '${msg.action}' message`);
+      const data = JSON.stringify(msg);
+      this.ws.send(data);
     } else {
-      throw new Error(`Cannot send ${eventName} WebSocket is closed`);
+      throw new Error(`Cannot send '${msg.action}': WebSocket is closed`);
     }
   }
 

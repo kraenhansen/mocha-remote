@@ -4,7 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 
 import pkg from './package.json';
 
-export default {
+export default [{
   input: 'src/node/index.ts',
   output: [
     { file: pkg.main, format: 'cjs' },
@@ -12,22 +12,36 @@ export default {
   ],
   plugins: [
     nodeResolve({
-      /*
-      resolveOnly: [
-        'mocha'
-      ],
-      */
+      preferBuiltins: true,
     }),
     commonjs({
       include: [
-        '../mocha/dist/mocha.bundle.js',
-        './node_modules/debug/src/index.js',
-        './node_modules/ws/index.js'
+        '../mocha/dist/mocha.node.bundle.js'
       ],
-      // transformMixedEsModules: true
+    }),
+    typescript({
+      module: "esnext",
+    }),
+  ],
+  external: ["debug", "mocha-remote-client", "ws"],
+}, {
+  input: 'src/browser/index.ts',
+  output: [
+    { file: pkg.browser, format: 'es' }
+  ],
+  plugins: [
+    nodeResolve({
+      browser: true,
+      preferBuiltins: false,
+    }),
+    commonjs({
+      include: [
+        '../mocha/dist/mocha.browser.bundle.js',
+      ],
     }),
     typescript({
       module: "esnext"
     }),
-  ]
-};
+  ],
+  external: ["debug", "mocha-remote-client"],
+}];

@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android && mocha-remote",
-    "ios": "react-native run-ios && mocha-remote",
+    "start": "react-native start",
+    "android": "../../../../cli/bin/mocha-remote -- react-native run-android",
+    "ios": "../../../../cli/bin/mocha-remote -- react-native run-ios",
     "lint": "eslint .",
     "install": "install-local"
   },
@@ -19,8 +20,7 @@
     "eslint": "^6.5.1",
     "install-local": "^2.0.0",
     "metro-react-native-babel-preset": "^0.56.0",
-    "mocha": "^5",
-    "mocha-remote-cli": "^0.14.1"
+    "mocha": "^8.3.2"
   },
   "localDependencies": {
     "mocha-remote-client": "../../../../client"

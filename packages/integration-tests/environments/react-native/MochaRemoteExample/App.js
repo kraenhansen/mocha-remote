@@ -7,7 +7,7 @@
 
 import React, {Component} from 'react';
 import {StyleSheet, View, Text} from 'react-native';
-import {MochaRemoteClient} from 'mocha-remote-client';
+import {Client} from 'mocha-remote-client';
 
 export class App extends Component {
   state = {status: 'waiting'};
@@ -55,14 +55,13 @@ export class App extends Component {
   }
 
   prepareTests() {
-    this.client = new MochaRemoteClient({
-      onInstrumented: mocha => {
-        // Set the title of the root suite
-        mocha.suite.title = `React-Native on ${Platform.OS}`;
+    this.client = new Client({
+      title: `React-Native on ${Platform.OS}`,
+      tests: () => {
         // Require tests
         require('./test/simple.test.js');
       },
-      whenRunning: runner => {
+      onRunning: runner => {
         runner.on('test', test => {
           // Compute the current test index - incrementing it if we're running
           const currentTestIndex =

@@ -1,12 +1,12 @@
 import { expect } from "chai";
 import path from "path";
 
-import { MochaRemoteClient } from "mocha-remote-client";
-import { MochaRemoteServer } from "mocha-remote-server";
+import { Client } from "mocha-remote-client";
+import { Server } from "mocha-remote-server";
 
 describe("callbacks", () => {
-  let server: MochaRemoteServer;
-  let client: MochaRemoteClient;
+  let server: Server;
+  let client: Client;
 
   afterEach(async () => {
     if (client) {
@@ -23,31 +23,24 @@ describe("callbacks", () => {
     it("calls the callbacks and completes", async () => {
       // Create a server with the a muted reporter
       const serverStart = new Promise(resolve => {
-        server = new MochaRemoteServer(
-          {
-            reporter: "base"
-          },
-          {
-            autoStart: true,
-            onServerStarted: resolve
-          }
-        );
+        server = new Server({
+          reporter: "base",
+          autoStart: true,
+        }).on("started", resolve);
       });
 
       // Create a promise that resolves when tests finishes
       const clientRunning = new Promise(resolve => {
         // Create a client - which is supposed to run where the tests are running
-        client = new MochaRemoteClient({
-          onInstrumented: mocha => {
+        client = new Client({
+          tests: () => {
             // Bust the cache if any
             delete require.cache[sampleTestPath];
             // Add the test file
-            mocha.addFile(sampleTestPath);
+            require(sampleTestPath);
           },
-          onRunning: runner => {
-            runner.once("end", resolve);
-          }
         });
+        client.once("end", resolve);
       });
 
       const serverCompleted = new Promise<void>(resolve => {

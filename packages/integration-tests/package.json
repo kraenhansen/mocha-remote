@@ -5,7 +5,7 @@
   "description": "The integration tests of the project",
   "scripts": {
     "build": "echo 'No need to build the tests'",
-    "test": "../../node_modules/.bin/mocha --opts ../../configs/mocha.opts **/*.test.ts"
+    "test": "mocha **/*.test.ts"
   },
   "files": [
     "src"
@@ -18,5 +18,13 @@
   "dependencies": {
     "mocha-remote-client": "^0.16.0",
     "mocha-remote-server": "^0.16.0"
+  },
+  "devDependencies": {
+    "mocha": "../../node_modules/mocha"
+  },
+  "mocha": {
+    "extension": ["ts"],
+    "spec": "src/**/*.test.ts",
+    "require": "ts-node/register"
   }
 }
