@@ -4,11 +4,14 @@ import Mocha from "mocha";
 // TODO: Consider actually implementing the Mocha.Runner interface
 
 export class FakeRunner extends EventEmitter {
-  stats?: Mocha.Stats = {
-    suites: 0,
-    tests: 0,
-    passes: 0,
-    pending: 0,
-    failures: 0
-  };
+  static constants = Mocha.Runner.constants;
+  public failures = 0;
+  
+  constructor() {
+    super();
+    // Count the number of failures
+    this.on(FakeRunner.constants.EVENT_TEST_FAIL, () => {
+      this.failures++;
+    });
+  }
 }

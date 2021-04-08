@@ -23,7 +23,7 @@ describe("basic", () => {
     // Create a server - which is supposed to run in Node
     server = new Server();
     await server.start();
-    expect(server.getUrl()).to.equal("ws://0.0.0.0:8090");
+    expect(server.url).to.equal("ws://0.0.0.0:8090");
   });
 
   it("connects", async () => {
@@ -38,7 +38,7 @@ describe("basic", () => {
     // Create a client - which is supposed to run where the tests are running
     client = new Client({
       autoConnect: false,
-      url: server.getUrl()
+      url: server.url,
     });
     // Await the client connecting and the server emitting an event
     await Promise.all([
@@ -56,19 +56,20 @@ describe("basic", () => {
     });
     await server.start();
 
+    let testRan = false;
     // Create a client - which is supposed to run where the tests are running
     client = new Client({
       id: "tests",
-      url: server.getUrl(),
+      url: server.url,
+      autoConnect: true,
       tests: () => {
-        it("works");
+        it("works", () => {
+          // Tumbleweed
+          testRan = true;
+        });
       },
     });
-    // Let's instrument the mocha instance and resolve a promise when the tests start
-    const clientRunningPromise = new Promise(resolve => {
-      client.once("running", resolve);
-    });
-
+    
     await new Promise<void>(resolve => {
       // Asking the server to start the run
       server.run(failures => {
@@ -77,7 +78,7 @@ describe("basic", () => {
       });
     });
 
-    await clientRunningPromise;
+    expect(testRan).equals(true);
   });
 
   it("disconnects the client if ids mismatch", async () => {
@@ -96,15 +97,15 @@ describe("basic", () => {
     await new Promise<void>(resolve => {
       // Create a client - which is supposed to run where the tests are running
       client = new Client({
-        url: server.getUrl(),
+        url: server.url,
       });
-      client.once("disconnect", ({ code, reason }) => {
+      client.once("disconnection", ({ code, reason }) => {
         expect(code).to.equal(1002);
         expect(reason).to.equal(
           'Expected "mocha-remote-a-non-default-id" protocol got "mocha-remote-default"'
         );
         resolve();
-      })
+      });
     });
   });
 });

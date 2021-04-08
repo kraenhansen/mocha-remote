@@ -1,22 +1,23 @@
-import Debug from "debug";
-import { parse } from "flatted";
 import Mocha from "mocha";
 import WebSocket from "ws";
 import path from "path";
 import type http from "http";
+import flatted from "flatted";
 
-import type { ClientMessage } from "../../../types/client";
-import type { ServerMessage } from "../../../types/server";
+import type { ClientMessage, CustomContext, ServerMessage, MochaConfig } from "mocha-remote-common";
+export type { CustomContext };
+
+import { createStatsCollector } from "./stats-collector";
+import { extend, Debugger } from "./debug";
 
 import { FakeRunner } from "./FakeRunner";
 import { ServerEventEmitter } from "./ServerEventEmitter";
+import { deserialize } from "./serialization";
 
 type MochaReporters = { [name: string]: typeof Mocha.reporters.Base };
 const builtinReporters: MochaReporters = Mocha.reporters;
 
 export type ReporterOptions = { [key: string]: string | boolean };
-
-const debug = Debug("mocha-remote:server");
 
 function createPromiseHandle() {
   let resolve: () => void = () => {
@@ -29,49 +30,71 @@ function createPromiseHandle() {
 }
 
 export interface ServerConfig {
-  autoStart: boolean;
+  /** Network hostname to use when istening for clients */
   host: string;
+  /** Network port to use when listening for clients */
   port: number;
-  stopAfterCompletion: boolean;
-  runOnConnection: boolean;
+  /** Start the server as soon as it gets constructed */
+  autoStart: boolean;
+  /** Start running tests as soon as a client connects */
+  autoRun: boolean;
   /** An ID expected by the clients connecting */
   id: string;
+  /** Specify reporter to use */
   reporter: Mocha.ReporterConstructor | string;
+  /** Reporter-specific options */
   reporterOptions: ReporterOptions;
+  /** Only run tests matching this string or regexp */
   grep: string | undefined;
+  /** Inverts grep matches */
+  invert: boolean | undefined;
+  /** Runtime context sent to client when starting a run */
+  context: CustomContext | undefined;
 }
 
 export class Server extends ServerEventEmitter {
   public static DEFAULT_CONFIG: ServerConfig = {
-    autoStart: true,
+    autoStart: false,
     host: "0.0.0.0",
     id: "default",
     port: 8090,
-    stopAfterCompletion: false,
-    runOnConnection: false,
+    autoRun: false,
     reporter: "spec",
     reporterOptions: {},
     grep: undefined,
+    invert: undefined,
+    context: undefined,
   };
 
-  public readonly stopped: Promise<void>;
+  private static debugCounter = 0;
+  private static nextDebug() {
+    return extend(`Server[${Server.debugCounter++}]`);
+  }
 
-  private config: ServerConfig;
+  public readonly stopped: Promise<void>;
+  public readonly config: ServerConfig;
+
+  private readonly debug: Debugger;
   private wss?: WebSocket.Server;
   private client?: WebSocket;
   private runner?: FakeRunner;
   private stoppedPromiseHandle = createPromiseHandle();
+  /** The options to send to the next connecting running client */
+  private clientOptions?: MochaConfig = {};
 
   constructor(
-    config: Partial<ServerConfig> = {}
+    config: Partial<ServerConfig> = {},
+    debug = Server.nextDebug(),
   ) {
-    super();
+    super(debug.extend("events"));
+    this.debug = debug;
+    this.debug("Constructing a server");
     this.config = { ...Server.DEFAULT_CONFIG, ...config };
     this.stopped = this.stoppedPromiseHandle.promise;
   }
 
   public start(): Promise<void> {
-    debug(`Server is starting`);
+    this.debug(`Server is starting`);
     return new Promise<void>((resolve, reject) => {
       this.wss = new WebSocket.Server({
         host: this.config.host,
@@ -81,12 +104,12 @@ export class Server extends ServerEventEmitter {
       this.wss.on("connection", this.onConnection);
       // When the server starts listening
       this.wss.once("listening", () => {
-        debug(`Server is listening on ${this.getUrl()}`);
+        this.debug(`Server is listening on ${this.url}`);
         resolve();
       });
       // If an error happens while starting
       this.wss.once("error", (err: Error) => {
-        debug(`Server failed to start ${err.stack}`);
+        this.debug(`Server failed to start ${err.stack}`);
         this.emit("error", err);
         reject(err);
       });
@@ -96,7 +119,7 @@ export class Server extends ServerEventEmitter {
   }
 
   public stop(): Promise<void> {
-    debug("Server is stopping");
+    this.debug("Server is stopping");
     return new Promise<void>((resolve, reject) => {
       if (this.wss) {
         this.wss.close(err => {
@@ -113,19 +136,19 @@ export class Server extends ServerEventEmitter {
         resolve();
       }
     }).then(() => {
-      debug("Server was stopped");
+      this.debug("Server was stopped");
       // Resolve the stopped promise
       this.stoppedPromiseHandle.resolve();
     });
   }
 
-  public run(fn: (failures: number) => void): Mocha.Runner {
-    debug("Server started running tests");
+  public run(fn: (failures: number) => void, context?: CustomContext): Mocha.Runner {
+    this.debug("Server started running tests");
 
     if (!this.wss) {
       if (this.config.autoStart) {
         this.start().then(undefined, err => {
-          debug(`Auto-starting failed: ${err.stack}`);
+          this.debug(`Auto-starting failed: ${err.stack}`);
         });
       } else {
         throw new Error("Server must be started before run is called");
@@ -136,8 +159,25 @@ export class Server extends ServerEventEmitter {
       throw new Error("A run is already in progress");
     }
     // this.runner = new Mocha.Runner(this.suite, this.options.delay || false);
-    // TODO: Stub this to match the Runner's interface
+    // TODO: Stub this to match the Runner's interface even better
     this.runner = new FakeRunner();
+    // Attach event listeners to update stats
+    createStatsCollector(this.runner as Mocha.Runner);
+
+    // Bind listeners to the runner, re-emitting events on the server itself
+    this.runner.on("end", () => {
+      this.emit("end");
+    });
+
+    // Set the client options, to be passed to the next running client
+    this.clientOptions = {
+      grep: this.config.grep,
+      invert: this.config.invert,
+      context: {
+        ...this.config.context,
+        ...context,
+      },
+    };
 
     // We need to access the private _reporter field
     const Reporter = this.determineReporterConstructor(this.config.reporter);
@@ -148,42 +188,32 @@ export class Server extends ServerEventEmitter {
     });
 
     const done = (failures: number) => {
-      debug("Server ended testing");
+      this.debug("Testing is done");
       // If the reporter wants to know when we're done, we will tell it
       // It will call the fn callback for us
       if (reporter.done) {
         reporter.done(failures, fn);
       } else if (fn) {
-        try {
-          fn(failures);
-        } catch (err) {
-          throw new Error(err);
-        }
+        fn(failures);
       }
     };
 
     // Attach a listener to the run ending
-    this.runner.once("end", () => {
-      const failures =
-        (this.runner && this.runner.stats && this.runner.stats.failures) || 0;
+    this.runner.once(FakeRunner.constants.EVENT_RUN_END, () => {
+      const failures = this.runner ? this.runner.failures : 0;
       // Delete the runner to allow another run
       delete this.runner;
-      // Stop the server if we should
-      if (this.config.stopAfterCompletion) {
-        this.stop();
-      }
+      // Get rid of the client options
+      delete this.clientOptions;
       // Call any callbacks to signal completion
       done(failures);
     });
 
     // If we already have a client, tell it to run
     if (this.client && this.client.readyState === WebSocket.OPEN) {
-      // TODO: Send runtime options to the client
       this.send({
         action: "run",
-        options: {
-          ...this.clientOptions,
-        },
+        options: this.clientOptions,
       });
     }
 
@@ -191,11 +221,11 @@ export class Server extends ServerEventEmitter {
     return this.runner as Mocha.Runner;
   }
 
-  public async runAndStop(): Promise<void> {
+  public async runAndStop(context?: CustomContext): Promise<void> {
     try {
       // Run the tests
       // TODO: Consider adding a timeout
-      const failures = await new Promise<number>(resolve => this.run(resolve));
+      const failures = await new Promise<number>(resolve => this.run(resolve, context));
       if (failures > 0) {
         throw new Error(`Tests completed with ${failures} failures`);
       }
@@ -205,7 +235,16 @@ export class Server extends ServerEventEmitter {
     }
   }
 
-  public getUrl(): string {
+  public get port(): number {
+    if (this.wss) {
+      const { port } = this.wss.address() as WebSocket.AddressInfo;
+      return port;
+    } else {
+      throw new Error("Cannot get port of a server that is not listening");
+    }
+  }
+
+  public get url(): string {
     if (this.wss) {
       const { address, port } = this.wss.address() as WebSocket.AddressInfo;
       return `ws://${address}:${port}`;
@@ -216,7 +255,7 @@ export class Server extends ServerEventEmitter {
 
   public send(msg: ClientMessage): void {
     if (this.client && this.client.readyState === WebSocket.OPEN) {
-      const data = JSON.stringify(msg);
+      const data = flatted.stringify(msg);
       this.client.send(data);
     } else {
       throw new Error("No client connected");
@@ -224,9 +263,15 @@ export class Server extends ServerEventEmitter {
   }
 
   private onConnection = (ws: WebSocket, req: http.IncomingMessage) => {
-    debug("Client connected");
+    this.debug("Client connected");
     // Check that the protocol matches
     const expectedProtocol = `mocha-remote-${this.config.id}`;
+    ws.on("close", (code: number, reason: string) => {
+      this.emit("disconnection", ws, code, reason);
+    });
+    // Signal that a client has connected
+    this.emit("connection", ws, req);
+    // Disconnect if the protocol mismatch
     if (ws.protocol !== expectedProtocol) {
       // Protocol mismatch - close the connection
       ws.close(
@@ -236,7 +281,7 @@ export class Server extends ServerEventEmitter {
       return;
     }
     if (this.client) {
-      debug("A client was already connected");
+      this.debug("A client was already connected");
       this.client.removeAllListeners();
       this.client.close(
         1013 /* try again later */,
@@ -247,37 +292,33 @@ export class Server extends ServerEventEmitter {
     // Hang onto the client
     this.client = ws;
     this.client.on("message", this.onMessage.bind(this, this.client));
-    this.client.on("close", (code: number, reason: string) => {
-      this.emit("disconnection", ws, code, reason);
-    });
-    // Signal that a client has connected
-    this.emit("connection", ws, req);
     // If we already have a runner, it can run now that we have a client
     if (this.runner) {
-      this.send({ action: "run", options: this.clientOptions });
-    } else if (this.config.runOnConnection) {
-      debug("Start running tests because a client connected");
+      if (this.clientOptions) {
+        this.send({ action: "run", options: this.clientOptions });
+      } else {
+        throw new Error("Internal error: Expected a clientOptions");
+      }
+    } else if (this.config.autoRun) {
+      this.debug("Start running tests because a client connected");
       this.run(() => {
-        debug("Stopped running tests from connection");
+        this.debug("Stopped running tests from connection");
       });
     }
   };
 
   private onMessage = (ws: WebSocket, message: string) => {
     try {
-      const msg = JSON.parse(message) as ServerMessage;
+      const msg = deserialize(message) as ServerMessage;
       if (typeof msg.action !== "string") {
         throw new Error("Expected message to have an action property");
       }
       
-      debug(`Received a '${msg.action}' message`);
+      this.debug(`Received a '${msg.action}' message: %o`, msg);
       if (msg.action === "event") {
         if (this.runner) {
-          /*
-          const inflatedArgs = this.inflateMochaArgs(msg.name, msg.args);
-          this.runner.emit(msg.action, ...inflatedArgs);
-          */
-          throw new Error(`Not yet implemented`);
+          const args = msg.args || [];
+          this.runner.emit(msg.name, ...args);
         } else {
           throw new Error(
             "Received a message from the client, but server wasn't running"
@@ -303,9 +344,9 @@ export class Server extends ServerEventEmitter {
    * @returns A constructor for the reporter.
    * @see {Mocha.prototype.reporter}
    */
-  private determineReporterConstructor(reporter: string | Mocha.ReporterConstructor) {
+  private determineReporterConstructor(reporter: string | Mocha.ReporterConstructor): typeof Mocha.reporters.Base {
     if (typeof reporter === "function") {
-      return reporter;
+      return reporter as unknown as typeof Mocha.reporters.Base;
     } else if (typeof reporter === "string") {
       // Try to load a built-in reporter
       if (reporter in builtinReporters) {
@@ -333,46 +374,5 @@ export class Server extends ServerEventEmitter {
     } else {
       throw new Error(`Unexpected reporter '${reporter}'`);
     }
-  }
-
-  private get clientOptions() {
-    const { grep } = this.config;
-    return { grep };
-  }
-
-  private inflateMochaArgs(eventName: string, args: unknown[]) {
-    // Monkey patch the test object when it passes
-    if (
-      [
-        "test",
-        "test end",
-        "pass",
-        "fail",
-        "pending",
-        "suite",
-        "suite end"
-      ].indexOf(eventName) >= 0
-    ) {
-      // Create an actual test object to allow method calls
-      args[0] = this.inflateRunnable(args[0]);
-    }
-    return args;
-  }
-
-  private inflateRunnable(data: unknown) {
-    if (typeof data !== "object" || data === null) {
-      throw new Error("Expected an object");
-    }
-    const { title = "", type = "" } = data as { title?: string, type?: string };
-    // Create an actual test object to allow calls to methods
-    const runnable =
-      type === "test" ? new Mocha.Test(title) : new Mocha.Suite(title);
-    // Patch the data onto the test
-    Object.assign(runnable, data);
-    // If it has a parent - inflate that too
-    if (runnable.parent) {
-      runnable.parent = this.inflateRunnable(runnable.parent) as Mocha.Suite;
-    }
-    return runnable;
   }
 }

@@ -30,16 +30,53 @@ describe("Mocha Remote CLI", () => {
     expect(output.status).equals(13, "expected signal to propagate");
   });
 
-  it("expose hostname and port as environment variables", () => {
+  it("expose url, port and id as environment variables", () => {
     const output = cli("--port", "0", "--", "node", "--print", "JSON.stringify(process.env)");
     const jsonOuput = parseJsonOutput(output.stdout);
-    expect(jsonOuput).include.keys("MOCHA_REMOTE_URL");
+    expect(jsonOuput).include.keys("MOCHA_REMOTE_URL", "MOCHA_REMOTE_ID");
     const MOCHA_REMOTE_URL: string = jsonOuput.MOCHA_REMOTE_URL;
+    const MOCHA_REMOTE_PORT: string = jsonOuput.MOCHA_REMOTE_PORT;
+    const MOCHA_REMOTE_ID: string = jsonOuput.MOCHA_REMOTE_ID;
     expect(MOCHA_REMOTE_URL.startsWith("ws://0.0.0.0"));
+    expect(Number.isInteger(MOCHA_REMOTE_PORT), "expected an integer port");
+    expect(MOCHA_REMOTE_ID).equals("default");
+  });
+
+  it("propagates context to client", () => {
+    // Supports multiple --context / -c runtime flags and multiple pairs in each
+    const output = cli("--port", "0", "--context", "k1=v1,k2=v2", "-c", "k3=v3,truthy", "--", "ts-node", "src/test/context-logging-client.ts");
+    const jsonOuput = parseJsonOutput(output.stdout);
+    expect(jsonOuput).deep.equals({ k1: "v1", k2: "v2", k3: "v3", truthy: true });
   });
 
   it("prints when client connects", () => {
     const output = cli("--port", "0", "--", "ts-node", "src/test/simple-client.ts");
     expect(output.stdout).contains("CONNECTION from 127.0.0.1");
+  });
+
+  it("propagates failures as exit code", () => {
+    const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "ts-node", "src/test/simple-client.ts");
+    expect(output.stdout).contains("Totally expected");
+    expect(output.status).equals(1);
+  });
+
+  it("greps tests", () => {
+    const output = cli("--port", "0", "--grep", "not matching", "--", "ts-node", "src/test/simple-client.ts");
+    expect(output.stdout).contains("0 passing");
+    expect(output.status).equals(0);
+  });
+
+  it("greps tests inverted", () => {
+    const output = cli("--port", "0", "--grep", "not matching", "--invert", "--", "ts-node", "src/test/simple-client.ts");
+    expect(output.stdout).contains("1 passing");
+    expect(output.status).equals(0);
+  });
+
+  it("allows re-running in watch mode", () => {
+    const output = cli("--port", "0", "--watch", "--", "ts-node", "src/test/rerunning-client.ts");
+    expect(output.stdout).contains("Running client #0");
+    expect(output.stdout).contains("Running client #1");
+    expect(output.stdout).contains("Running client #2");
+    expect(output.status).equals(0);
   });
 });

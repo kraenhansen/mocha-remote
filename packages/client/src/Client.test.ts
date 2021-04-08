@@ -1,8 +1,10 @@
 import { expect } from 'chai';
 import ws from "ws";
+import flatted from "flatted";
 
-import { Runner } from ".";
 import { Client } from './Client';
+
+const reconnectDelay = 50;
 
 describe("Mocha Remote Client", () => {
   it("constructs", () => {
@@ -56,6 +58,34 @@ describe("Mocha Remote Client", () => {
     expect(ran).deep.equals(["a", "b"]);
   });
 
+  it("calls tests with a context", async () => {
+    const recursive: Record<string, unknown> = {};
+    recursive.child = recursive;
+
+    const context: Record<string, unknown> = {
+      greeting: "hello world",
+      number: 1337,
+      yes: true,
+      run: 0,
+      recursive,
+    };
+
+    const updates: Record<string, unknown> = {};
+
+    const client = new Client({
+      autoConnect: false,
+      context,
+      tests: actualContext => {
+        expect(actualContext).deep.equals({ ...context, ...updates });
+      }
+    });
+
+    await new Promise(resolve => client.run(resolve));
+    // Increase the run count and run again, providing the updated value an update to the context when running
+    updates.run = 1;
+    await new Promise(resolve => client.run(resolve, { context: { run: 1 } }));
+  });
+
   it("re-runs", async () => {
     const ran: string[] = [];
     const client = new Client({
@@ -75,25 +105,23 @@ describe("Mocha Remote Client", () => {
       const runner = client.run(resolve);
       // We expect that all tests has been loaded now
       expect(client.suite.tests.length).equals(1);
-      // The total number of tests should only include grepped
       expect(runner.total).equals(1);
     })
 
     expect(failures1).equals(1);
     expect(ran).deep.equals(["a"]);
 
-    // One more time ... will register a new test since the calling the tests() is not memorized
+    // One more time
 
     const failures2 = await new Promise(resolve => {
       const runner = client.run(resolve);
       // We expect that all tests has been loaded now
-      expect(client.suite.tests.length).equals(2);
-      // The total number of tests should only include grepped
-      expect(runner.total).equals(2);
+      expect(client.suite.tests.length).equals(1);
+      expect(runner.total).equals(1);
     })
 
-    expect(failures2).equals(2);
-    expect(ran).deep.equals(["a", "a", "a"]);
+    expect(failures2).equals(1);
+    expect(ran).deep.equals(["a", "a"]);
   });
 
 
@@ -113,9 +141,26 @@ describe("Mocha Remote Client", () => {
       wss.close();
     });
 
+    it("reconnects until server is up", async () => {
+      const { port } = wss.address() as ws.AddressInfo;
+      // Shut down the server before the client gets a chance to connect
+      wss.close();
+      // Start connecting
+      const client = new Client({ url, reconnectDelay });
+      // Wait for a couple of attempts
+      await new Promise(resolve => setTimeout(resolve, reconnectDelay * 2));
+      // Start the server (using the same port as initially)
+      wss = new ws.Server({ port });
+      await Promise.all([
+        new Promise(resolve => client.once("connection", resolve)),
+        new Promise(resolve => wss.once("connection", resolve)),
+      ]);
+      // Disconnect gracefully
+      client.disconnect();
+    });
+
     it("connects, reconnects and stops when disconnected", async () => {
       const expectedRetries = 3;
-      const reconnectDelay = 50;
 
       let clientConnections = 0;
       let serverConnections = 0;
@@ -129,7 +174,7 @@ describe("Mocha Remote Client", () => {
       await new Promise<void>(resolve => {
         const client = new Client({ url, reconnectDelay });
         // Count connections
-        client.on("connect", () => {
+        client.on("connection", () => {
           clientConnections++;
           if (clientConnections >= expectedRetries) {
             // Disconnecting should prevent any future reconnects
@@ -147,16 +192,30 @@ describe("Mocha Remote Client", () => {
       expect(serverConnections).equals(expectedRetries);
     });
 
+    it.skip("throws when disconnected while reconnecting", async () => {
+      const client = new Client({ url, reconnectDelay });
+    });
+
     it("runs tests when asked", async () => {
       wss.on("connection", ws => {
-        ws.send(JSON.stringify({ action: "run", options: { grep: "will" } }));
+        ws.send(flatted.stringify({
+          action: "run",
+          options: {
+            grep: "will",
+            context: { greeting: "hi" },
+          },
+        }));
       });
 
       const failures = await new Promise<number>(resolve => {
         const client = new Client({
           url,
           autoReconnect: false,
-          tests: () => {
+          tests: (context) => {
+            // Expect that the context is passed from the server
+            expect(context).deep.equals({
+              greeting: "hi",
+            });
             it("will fail", () => {
               throw new Error("Expected failure");
             });
@@ -176,7 +235,7 @@ describe("Mocha Remote Client", () => {
       // Close the server right away to provoke a connection failure
       wss.close();
       await new Promise<void>(resolve => {
-        const client = new Client({ url });
+        const client = new Client({ url, autoReconnect: false });
         client.once("error", err => {
           expect(err).instanceof(Error);
           expect(err.message.startsWith("connect ECONNREFUSED"));
@@ -189,13 +248,17 @@ describe("Mocha Remote Client", () => {
       wss.on("connection", ws => {
         ws.send('');
         ws.send('{}');
-        ws.send('{ "action": "unexpected" }');
-        ws.send('{ "action": "run" }');
-        ws.send('{ "action": "error" }');
+        ws.send('[]');
+        ws.send(flatted.stringify({}));
+        ws.send(flatted.stringify({ "action": "unexpected" }));
+        ws.send(flatted.stringify({ "action": "run" }));
+        ws.send(flatted.stringify({ "action": "error" }));
       });
 
       const EXPECTED_MESSAGES = [
-        "Unexpected end of JSON input",
+        "Failed to parse flatted JSON: Unexpected end of JSON input",
+        "Failed to parse flatted JSON: $parse(...).map is not a function",
+        "Failed to parse flatted JSON: Cannot read property 'action' of undefined",
         "Expected an action property",
         "Unexpected action 'unexpected'",
         "Expected an options object on 'run' actions",
@@ -214,12 +277,42 @@ describe("Mocha Remote Client", () => {
             client.disconnect();
           }
         });
-        client.once("disconnect", () => {
+        client.once("disconnection", () => {
           resolve();
         });
       });
 
       expect(messages).deep.equals(EXPECTED_MESSAGES);
+    });
+
+    it("sends runner events when emitted", async () => {
+      const messages: Record<string, unknown>[] = [];
+      const runEnded = new Promise<void>(resolve => {
+        wss.on("connection", ws => {
+          ws.on("message", (msg: string) => {
+           const parsed = flatted.parse(msg);
+           messages.push(parsed);
+           if (parsed.action === "event" && parsed.name === "end") {
+             resolve();
+           }
+          });
+        });
+      });
+      const client = new Client({
+        autoConnect: false,
+        autoReconnect: false,
+        url,
+        tests() {
+          it("runs", () => {
+            // Tumbleweed
+          });
+        }
+      });
+      await client.connect();
+      await new Promise(resolve => client.run(resolve));
+      await runEnded;
+      const eventNames = messages.filter(({ action }) => action === "event").map(({ name }) => name);
+      expect(eventNames).deep.equals(["start", "suite", "test", "pass", "test end", "suite end", "end"]);
     });
   });
 });

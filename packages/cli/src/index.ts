@@ -8,24 +8,71 @@ import chalk from "chalk";
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-import { Server, ReporterOptions, WebSocket } from "mocha-remote-server";
+import { Server, ReporterOptions, CustomContext, WebSocket } from "mocha-remote-server";
 
-type ParserOptions = { [key: string]: string |true };
+type KeyValues = { [key: string]: string | true };
 
-function parseParserOptions(opts: string[]) {
-  return opts.reduce((acc, opt) => {
-    const pair = opt.split('=');
-    if (pair.length > 2 || !pair.length) {
-      throw new Error(`invalid reporter option '${opt}'`);
+function parseKeyValues(opts: string[]): KeyValues {
+  // Split on , since element might contain multiple key,value pairs
+  // Flat because the parameter might be included multiple times
+  const pairs = opts.map(value => value.split(",")).flat();
+  return Object.fromEntries(pairs.map(pair => {
+    const [key, value] = pair.split("=");
+    if (typeof value === "string" && value.length > 0) {
+      return [key, value];
+    } else {
+      return [key, true];
     }
+  }));
+}
 
-    acc[pair[0]] = pair.length === 2 ? pair[1] : true;
-    return acc;
-  }, {} as ParserOptions)
+function exitCause(code: number | null, signal: string | null) {
+  if (typeof code === "number") {
+    return `code = ${code}`;
+  } else if (signal) {
+    return `signal = ${signal}`;
+  } else {
+    return 'unknown cause';
+  }
 }
 
 // Start the server
-export async function run(server: Server, command?: string[]): Promise<number> {
+export async function startServer(server: Server, command?: string[]): Promise<void> {
+  server.on('started', server => {
+    const url = server.url;
+    /* eslint-disable-next-line no-console */
+    console.log(
+      chalk.green("LISTENING"),
+      `on ${chalk.bold(url)}`,
+      `for clients with id = ${chalk.bold(server.config.id)}`
+    );
+  })
+
+  server.on("connection", (ws, req) => {
+    /* eslint-disable-next-line no-console */
+    console.log(
+      displayClient(ws),
+      chalk.green("CONNECTION"),
+      `from ${req.socket.remoteAddress + ':' + req.socket.remotePort}`,
+    );
+  });
+
+  server.on("disconnection", (ws, code, reason) => {
+    /* eslint-disable-next-line no-console */
+    const log = code === 1000 ? console.log : console.warn;
+    const color = code === 1000 ? chalk.green : chalk.yellow;
+    const msg = code === 1000 ? "normal closure" : reason || "for no particular reason";
+    log(displayClient(ws), color("DISCONNECTION"), `${msg} (code = ${code})`);
+  });
+
+  server.on("error", (error) => {
+    /* eslint-disable-next-line no-console */
+    console.error(
+      chalk.red("ERROR"),
+      `${error.message || "Missing a message"}`,
+    );
+  });
+
   await server.start();
   // User stopping the process in a terminal
   process.on("SIGINT", () => {
@@ -35,13 +82,15 @@ export async function run(server: Server, command?: string[]): Promise<number> {
     });
   });
 
-  if (command) {
+  if (command && command.length > 0) {
     const [commandName, ...args] = command;
     const commandProcess = cp.spawn(commandName, args, {
       stdio: "inherit",
       env: {
         ...process.env,
-        MOCHA_REMOTE_URL: server.getUrl(),
+        MOCHA_REMOTE_URL: server.url,
+        MOCHA_REMOTE_PORT: server.port.toString(),
+        MOCHA_REMOTE_ID: server.config.id,
       }
     });
     /* eslint-disable-next-line no-console */
@@ -49,10 +98,12 @@ export async function run(server: Server, command?: string[]): Promise<number> {
       chalk.dim(`Running command: ${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`),
       '\n'
     );
+
     // We should exit when the command process exits - and vise versa
-    commandProcess.once("exit", (code) => {
+    commandProcess.once("exit", (code, signal) => {
+      const cause = exitCause(code, signal);
       /* eslint-disable-next-line no-console */
-      console.log('\n' + chalk.dim(`Command exited (status = ${typeof code === "number" ? code : 'unknown'})`));
+      console.log('\n' + chalk.dim(`Command exited (${cause})`));
       if (typeof code === "number") {
         process.exit(code);
       } else {
@@ -60,13 +111,15 @@ export async function run(server: Server, command?: string[]): Promise<number> {
         process.exit(1);
       }
     });
+
     process.on("SIGINT", () => {
       commandProcess.kill("SIGINT");
     });
+    
+    process.on("exit", () => {
+      commandProcess.kill();
+    });
   }
-
-  // Start the runner
-  return new Promise(resolve => server.run(resolve));
 }
 
 let connectionCount = 0;
@@ -80,12 +133,12 @@ function displayClient(ws: WebSocket) {
   return chalk.dim(`[${connectionIndex}]`);
 }
 
-if (module.parent === null) {
+export function run(args = hideBin(process.argv)): void {
   const logo = chalk.dim(fs.readFileSync(path.resolve(__dirname, '../logo.txt')));
   /* eslint-disable-next-line no-console */
   console.log(logo);
 
-  const argv = yargs(hideBin(process.argv))
+  yargs(args)
     .scriptName('mocha-remote')
     .version('version', 'Show version number & exit', packageJson.version)
     .alias('v', 'version')
@@ -104,6 +157,28 @@ if (module.parent === null) {
       default: 'default',
       alias: 'I',
     })
+    .option('grep', {
+      description: 'Only run tests matching this string or regexp',
+      type: 'string',
+      alias: 'g',
+    })
+    .option('invert', {
+      description: 'Inverts --grep matches',
+      type: 'boolean',
+      alias: 'i',
+    })
+    .option('watch', {
+      description: 'Keep the server running after a test has ended',
+      type: 'boolean',
+      default: false,
+      alias: 'w',
+    })
+    .option('context', {
+      description: 'Runtime context sent to client when starting a run (<k=v,[k1=v1,..]>)',
+      type: 'array',
+      alias: 'c',
+      coerce: parseKeyValues,
+    })
     .option('reporter', {
       description: 'Specify reporter to use',
       alias: 'R',
@@ -112,71 +187,48 @@ if (module.parent === null) {
     .option('reporter-option', {
       description: 'Reporter-specific options (<k=v,[k1=v1,..]>)',
       type: 'array',
-      coerce: parseParserOptions,
+      coerce: parseKeyValues,
       alias: ['O', 'reporter-options'],
+    })
+    .command('$0 [command...]', 'Start the Mocha Remote Server', ({ argv }) => {
+      // Create a mocha server instance
+      const server = new Server({
+        autoStart: false,
+        autoRun: argv.watch,
+        host: argv.hostname,
+        port: argv.port,
+        id: argv.id,
+        reporter: argv.reporter,
+        reporterOptions: argv.reporterOption as ReporterOptions,
+        context: argv.context as unknown as CustomContext,
+        grep: argv.grep,
+        invert: argv.invert,
+      });
+
+      // Extract any command given as positional argument
+      const command = argv._.map(v => v.toString());
+
+      startServer(server, command).then(
+        () => {
+          if (!argv.watch) {
+            // Run once and exit with the failures as exit code
+            server.run(failures => {
+              process.exit(failures);
+            });
+          }
+        },
+        err => {
+          /* eslint-disable-next-line no-console */
+          console.error(chalk.red("ERROR"), err.message);
+          process.exit(1);
+        }
+      );
     })
     .help(true)
     .alias('h', 'help')
     .argv
+}
 
-  // Create a mocha server instance
-  const server = new Server({
-    autoStart: false,
-    host: argv.hostname,
-    port: argv.port,
-    id: argv.id,
-    reporter: argv.reporter,
-    reporterOptions: argv.reporterOption as ReporterOptions,
-  });
-
-  server.on('started', server => {
-    const url = server.getUrl();
-    /* eslint-disable-next-line no-console */
-    console.log(
-      chalk.green("LISTENING"),
-      `on ${chalk.bold(url)}`,
-      `for clients with id = ${chalk.bold(argv.id)}`
-    );
-  })
-
-  server.on("connection", (ws, req) => {
-    /* eslint-disable-next-line no-console */
-    console.log(
-      displayClient(ws),
-      chalk.green("CONNECTION"),
-      `from ${req.socket.remoteAddress + ':' + req.socket.remotePort}`,
-    );
-  });
-
-  server.on("disconnection", (ws, code, reason) => {
-    /* eslint-disable-next-line no-console */
-    console.warn(
-      displayClient(ws),
-      chalk.yellow("DISCONNECTION"),
-      `${reason || "for no particular reason"} (code = ${code})`,
-    );
-  });
-
-  server.on("error", (error) => {
-    /* eslint-disable-next-line no-console */
-    console.error(
-      chalk.red("ERROR"),
-      `${error.message || "Missing a message"}`,
-    );
-  });
-
-  // Extract any command following "--"
-  const commandStart = process.argv.indexOf("--");
-  const command = commandStart !== -1 ? process.argv.slice(commandStart + 1) : undefined;
-
-  run(server, command).then(
-    failures => {
-      process.exit(failures);
-    },
-    err => {
-      /* eslint-disable-next-line no-console */
-      console.error(chalk.red("ERROR"), err.message);
-      process.exit(1);
-    }
-  );
+if (module.parent === null) {
+  run();
 }

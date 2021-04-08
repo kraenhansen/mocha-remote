@@ -8,7 +8,7 @@
     "build": "lerna exec -- npm run build",
     "prepublishOnly": "npm run build",
     "publish": "npx lerna publish",
-    "prepare": "lerna bootstrap"
+    "prepare": "lerna bootstrap --concurrency 1"
   },
   "author": {
     "name": "Kræn Hansen",

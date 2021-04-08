@@ -1,3 +1,4 @@
-export type ErrorMessage = { action: "error", message: string };
+import { ErrorMessage } from "../ErrorMessage";
+
 export type EventMessage = { action: "event", name: string, args: unknown[] };
 export type ServerMessage = ErrorMessage | EventMessage;

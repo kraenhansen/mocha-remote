@@ -1,10 +1,16 @@
 const timingsPattern = /\d+ms/g;
 
-export const removeTimings = (text: string) => {
+export function removeTimings(text: string): string {
   return text.replace(timingsPattern, "?ms");
 };
 
-export const delay = (timeout: number) => new Promise((resolve) => setTimeout(resolve, timeout));
+export function replaceTestPath(text: string, actualPath: string): string {
+  return text.split("/mocha-remote-client/mocked-test-suite.js").join(actualPath);
+};
+
+export function delay(timeout: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, timeout));
+}
 
 export * from "./mocked-mocha";
 

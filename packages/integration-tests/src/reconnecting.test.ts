@@ -6,12 +6,13 @@ import { Server } from "mocha-remote-server";
 
 import { delay } from "./utils";
 
-describe.skip("reconnecting client", () => {
+  // Making the test run faster
+const reconnectDelay = 50;
+
+describe("reconnecting client", () => {
   let server: Server;
   let client: Client;
 
-  // Making the test run faster
-  Client.DEFAULT_CONFIG.reconnectDelay = 50;
   const sampleTestPath = path.resolve(__dirname, "../sample.test.js");
 
   afterEach(async () => {
@@ -25,17 +26,21 @@ describe.skip("reconnecting client", () => {
 
   it("can start without a server, connect, run, fail, re-connect and re-run", async () => {
     // Create a server with the a muted reporter
-    server = new Server({ reporter: "base", autoStart: false });
+    server = new Server({ reporter: "base" });
+
+    const errors: unknown[] = [];
 
     // Create a client - which is supposed to run where the tests are running
     const clientReRunning = new Promise<void>(resolve => {
       let runningCounter = 0;
       client = new Client({
+        reconnectDelay,
         tests: () => {
           delete require.cache[sampleTestPath];
           require(sampleTestPath);
         },
       });
+
       client.on("running", runner => {
         if (runningCounter === 0) {
           runningCounter++;
@@ -50,11 +55,13 @@ describe.skip("reconnecting client", () => {
             `Didn't expect the test to run ${runningCounter + 1} times`
           );
         }
-      })
+      });
+
+      client.on("error", err => errors.push(err));
     });
 
     // Wait for the client to start reconnecting
-    await delay(Client.DEFAULT_CONFIG.reconnectDelay * 2.1);
+    await delay(reconnectDelay * 2.1);
     // Start the server
     await server.start();
 
@@ -68,7 +75,7 @@ describe.skip("reconnecting client", () => {
     // Stop the server
     server.stop();
     // Wait for client to start reconnecting
-    await delay(Client.DEFAULT_CONFIG.reconnectDelay * 2.1);
+    await delay(reconnectDelay * 2.1);
     // Start the server
     await server.start();
 

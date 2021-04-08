@@ -4,8 +4,6 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-
-    "strict": true,
-    "removeComments": true
+    "strict": true
   }
 }

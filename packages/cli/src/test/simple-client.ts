@@ -1,12 +1,11 @@
 import { Client } from "mocha-remote-client";
 
-const client = new Client({
-  url: process.env.MOCHA_REMOTE_URL,
-  tests: () => {
-    it("succeeds");
+new Client({
+  tests: context => {
+    it("tests something", () => {
+      if (context.failure) {
+        throw new Error(context.failure as string);
+      }
+    });
   }
-});
-
-client.once("connect", () => {
-  process.exit(0);
 });

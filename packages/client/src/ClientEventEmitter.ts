@@ -1,6 +1,7 @@
 import type { EventEmitter } from "events";
 import TypedEmitter, { Arguments } from "typed-emitter";
 import type { Runner } from "mocha-remote-mocha";
+import type { Debugger } from "debug";
 
 export type DisconnectParams = {
   code: number;
@@ -8,8 +9,8 @@ export type DisconnectParams = {
 }
 
 export enum ClientEvents {
-  DISCONNECTED = "disconnected",
-  CONNECTED = "connected",
+  CONNECTION = "connection",
+  DISCONNECTION = "disconnection",
   ERROR = "error",
   RUNNING = "running",
   TEST = "test",
@@ -17,15 +18,15 @@ export enum ClientEvents {
 }
 
 export type ConnectListener = (ws: WebSocket) => void;
-export type DisconnectListener = (params: DisconnectParams) => void;
+export type DisconnectListener = (params: Partial<DisconnectParams>) => void;
 export type ErrorListener = (e: Error) => void;
 export type RunningListener = (runner: Runner) => void;
 export type TestListener = () => void;
 export type EndListener = (failures: number) => void;
 
 export type MessageEvents = {
-  connect: ConnectListener,
-  disconnect: DisconnectListener,
+  connection: ConnectListener,
+  disconnection: DisconnectListener,
   error: ErrorListener,
   running: RunningListener,
   test: TestListener,
@@ -35,8 +36,11 @@ export type MessageEvents = {
 export class ClientEventEmitter implements TypedEmitter<MessageEvents> {
   private emitter: EventEmitter;
 
-  constructor(EventEmitterType: typeof EventEmitter) {
+  constructor(EventEmitterType: typeof EventEmitter, debug: Debugger) {
     this.emitter = new EventEmitterType();
+    for (const name of Object.values(ClientEvents)) {
+      this.on(name, (...args: unknown[]) => debug(`'%s' event emitted: %o`, name, args));
+    }
   }
 
   public addListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
@@ -107,6 +111,6 @@ export class ClientEventEmitter implements TypedEmitter<MessageEvents> {
   }
 
   public eventNames(): (keyof MessageEvents)[] {
-    return ["connect", "disconnect", "error", "running", "test", "end"];
+    return Object.values(ClientEvents);
   }
 }

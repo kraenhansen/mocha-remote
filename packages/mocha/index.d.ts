@@ -1,5 +1,6 @@
 declare module "mocha-remote-mocha" {
-  import { Context, Runner, Suite, interfaces } from "mocha";
+  import { Context, Runner, Suite, Test, interfaces } from "mocha";
   import type { Interface } from "mocha";
-  export { Context, Runner, Suite, interfaces, Interface };
+  const createStatsCollector: (runner: Runner) => void;
+  export { Context, Runner, Suite, Test, interfaces, Interface, createStatsCollector };
 }

@@ -2,15 +2,15 @@ import { EventEmitter } from "events";
 import TypedEmitter, { Arguments } from "typed-emitter";
 import type WebSocket from "ws";
 import type http from "http";
+import type { Debugger } from "debug";
 
 import type { Server } from "./Server";
 
-export enum ClientEvents {
-  DISCONNECTED = "disconnected",
-  CONNECTED = "connected",
+export enum ServerEvents {
+  STARTED = "started",
+  CONNECTION = "connection",
+  DISCONNECTION = "disconnection",
   ERROR = "error",
-  RUNNING = "running",
-  TEST = "test",
   END = "end",
 }
 
@@ -18,24 +18,28 @@ export type StartedListener = (server: Server) => void;
 export type ConnectionListener = (ws: WebSocket, req: http.IncomingMessage) => void;
 export type DisconnectionListener = (ws: WebSocket, code: number, reason: string) => void;
 export type ErrorListener = (error: Error) => void;
+export type EndListener = () => void;
 
 export type MessageEvents = {
   started: StartedListener,
   connection: ConnectionListener,
   disconnection: DisconnectionListener,
   error: ErrorListener,
+  end: EndListener,
   /*
   running: RunningListener,
   test: TestListener,
-  end: EndListener,
   */
 }
 
 export class ServerEventEmitter implements TypedEmitter<MessageEvents> {
   private emitter: EventEmitter;
 
-  constructor() {
+  constructor(debug: Debugger) {
     this.emitter = new EventEmitter();
+    for (const name of Object.values(ServerEvents)) {
+      this.on(name, (...args: unknown[]) => debug(`'%s' event emitted: %o`, name, args));
+    }
   }
 
   public addListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
@@ -106,6 +110,6 @@ export class ServerEventEmitter implements TypedEmitter<MessageEvents> {
   }
 
   public eventNames(): (keyof MessageEvents)[] {
-    return ["started", "connection", "disconnection", "error"];
+    return Object.values(ServerEvents);
   }
 }

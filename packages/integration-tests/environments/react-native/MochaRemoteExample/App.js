@@ -9,6 +9,8 @@ import React, {Component} from 'react';
 import {StyleSheet, View, Text} from 'react-native';
 import {Client} from 'mocha-remote-client';
 
+console.log(Client.EventEmitter)
+
 export class App extends Component {
   state = {status: 'waiting'};
 
@@ -57,29 +59,28 @@ export class App extends Component {
   prepareTests() {
     this.client = new Client({
       title: `React-Native on ${Platform.OS}`,
+      autoDisconnect: true,
       tests: () => {
         // Require tests
         require('./test/simple.test.js');
       },
-      onRunning: runner => {
-        runner.on('test', test => {
-          // Compute the current test index - incrementing it if we're running
-          const currentTestIndex =
-            this.state.status === 'running'
-              ? this.state.currentTestIndex + 1
-              : 0;
-          // Set the state to update the UI
-          this.setState({
-            status: 'running',
-            currentTest: test.fullTitle(),
-            currentTestIndex,
-            totalTests: runner.total,
-          });
-        });
-        runner.on('end', () => {
-          this.setState({status: 'ended'});
-        });
-      },
+    });
+    // Setup listeners
+    this.client.on("test", test => {
+      // Compute the current test index - incrementing it if we're running
+      const currentTestIndex =
+        this.state.status === 'running'
+          ? this.state.currentTestIndex + 1
+          : 0;
+      // Set the state to update the UI
+      this.setState({
+        status: 'running',
+        currentTest: test.fullTitle(),
+        currentTestIndex,
+        totalTests: runner.total,
+      });
+    }).on("end", () => {
+      this.setState({status: 'ended'});
     });
   }
 }

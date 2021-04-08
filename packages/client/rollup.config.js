@@ -16,14 +16,14 @@ export default [{
     }),
     commonjs({
       include: [
-        '../mocha/dist/mocha.node.bundle.js'
+        '../mocha/dist/mocha.node.bundle.js',
       ],
     }),
     typescript({
       module: "esnext",
     }),
   ],
-  external: ["debug", "mocha-remote-client", "ws"],
+  external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client", "ws"],
 }, {
   input: 'src/browser/index.ts',
   output: [
@@ -34,14 +34,10 @@ export default [{
       browser: true,
       preferBuiltins: false,
     }),
-    commonjs({
-      include: [
-        '../mocha/dist/mocha.browser.bundle.js',
-      ],
-    }),
+    commonjs(),
     typescript({
       module: "esnext"
     }),
   ],
-  external: ["debug", "mocha-remote-client"],
+  external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client"],
 }];

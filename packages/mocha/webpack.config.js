@@ -62,7 +62,7 @@ module.exports = [
       fallback: {
         'buffer': require.resolve('buffer/'),
         'events': require.resolve('events/'),
-        'process': require.resolve('process/browser'),
+        'process': path.resolve('./src/mocked-process.js'),
         'util': require.resolve('util/'),
       }
     },
