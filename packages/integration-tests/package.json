@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-integration-tests",
-  "version": "0.16.0",
+  "version": "1.0.0",
   "private": true,
   "description": "The integration tests of the project",
   "scripts": {
@@ -16,14 +16,16 @@
     "url": "https://github.com/kraenhansen"
   },
   "dependencies": {
-    "mocha-remote-client": "^0.16.0",
-    "mocha-remote-server": "^0.16.0"
+    "mocha-remote-client": "^1.0.0",
+    "mocha-remote-server": "^1.0.0"
   },
   "devDependencies": {
     "mocha": "../../node_modules/mocha"
   },
   "mocha": {
-    "extension": ["ts"],
+    "extension": [
+      "ts"
+    ],
     "spec": "src/**/*.test.ts",
     "require": "ts-node/register"
   }
