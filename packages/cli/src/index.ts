@@ -4,6 +4,7 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import cp from "child_process";
 import chalk from "chalk";
+import { inspect } from "util";
 
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
@@ -144,53 +145,74 @@ export function run(args = hideBin(process.argv)): void {
     .alias('v', 'version')
     .option('hostname', {
       description: 'Network hostname to use when listening for clients',
-      default: '0.0.0.0',
+      default: process.env.MOCHA_REMOTE_HOSTNAME || '0.0.0.0',
       alias: 'H',
     })
     .option('port', {
       description: 'Network port to use when listening for clients',
-      default: 8090,
+      default: parseInt(process.env.MOCHA_REMOTE_PORT || "8090", 10),
       alias: 'P',
     })
     .option('id', {
       description: 'Connections not matching this will be closed',
-      default: 'default',
+      default: process.env.MOCHA_REMOTE_ID || 'default',
       alias: 'I',
     })
     .option('grep', {
       description: 'Only run tests matching this string or regexp',
       type: 'string',
+      default: process.env.MOCHA_REMOTE_GREP,
       alias: 'g',
     })
     .option('invert', {
       description: 'Inverts --grep matches',
       type: 'boolean',
+      default: process.env.MOCHA_REMOTE_INVERT === "true",
       alias: 'i',
     })
     .option('watch', {
       description: 'Keep the server running after a test has ended',
       type: 'boolean',
-      default: false,
+      default: process.env.MOCHA_REMOTE_WATCH === "true" || false,
       alias: 'w',
     })
     .option('context', {
       description: 'Runtime context sent to client when starting a run (<k=v,[k1=v1,..]>)',
       type: 'array',
       alias: 'c',
+      default: process.env.MOCHA_REMOTE_CONTEXT || [],
       coerce: parseKeyValues,
     })
     .option('reporter', {
       description: 'Specify reporter to use',
       alias: 'R',
-      default: 'spec',
+      default: process.env.MOCHA_REMOTE_REPORTER || 'spec',
     })
     .option('reporter-option', {
       description: 'Reporter-specific options (<k=v,[k1=v1,..]>)',
       type: 'array',
+      default: process.env.MOCHA_REMOTE_REPORTER_OPTIONS || [],
       coerce: parseKeyValues,
       alias: ['O', 'reporter-options'],
     })
     .command('$0 [command...]', 'Start the Mocha Remote Server', ({ argv }) => {
+      /* eslint-disable-next-line no-console */
+      console.log(chalk.dim("reporter:"), argv.reporter);
+      if (Object.keys(argv.context).length > 0) {
+        /* eslint-disable-next-line no-console */
+        console.log(chalk.dim("context:"), inspect(argv.context, false, null, true));
+      }
+      if (argv.watch) {
+        /* eslint-disable-next-line no-console */
+        console.log(chalk.dim("running in watch-mode"));
+      }
+      if (argv.grep) {
+        /* eslint-disable-next-line no-console */
+        console.log(chalk.dim("grep:"), argv.grep, argv.invert ? chalk.dim("(inverted)"): "");
+      }
+      /* eslint-disable-next-line no-console */
+      console.log();
+
       // Create a mocha server instance
       const server = new Server({
         autoStart: false,

@@ -107,6 +107,8 @@ This can be used to "wrap" a command that starts and runs the client-side of the
 
 If you want to iterate your test suite or implementation, use the `--watch` flag. This will ask clients to run their tests as they connect but keep the server process running until it gets interrupted (pressing <kbd>Ctrl</kbd> + <kbd>C</kbd>).
 
+As an alternative, run with environment variable `MOCHA_REMOTE_WATCH=true` to enable watch mode by default.
+
 ### Hostname, port and id
 
 The `--hostname` and `--port` arguments controls the TCP settings of the underlying WebSocket Server. The default `--hostname` of `0.0.0.0` makes the socket listen on all network interfaces and the default port is `8090`. Setting the port to 0 (zero) will assign the first available port, this is useful if you want to run multiple instances of the CLI / Server without having to worry about picking available ports for each.
@@ -120,6 +122,8 @@ MOCHA_REMOTE_URL=ws://0.0.0.0:8090
 MOCHA_REMOTE_PORT=8090
 MOCHA_REMOTE_ID=default
 ```
+
+Run the CLI with environment variables `MOCHA_REMOTE_HOST`, `MOCHA_REMOTE_PORT`, `MOCHA_REMOTE_ID` to provide alternative default values.
 
 ### Context
 
@@ -147,8 +151,9 @@ new Client({
     });
   }
 });
-
 ```
+
+Run with environment variable `MOCHA_REMOTE_CONTEXT=secret=very-secure-indeed` to provide a default context.
 
 ### Grep
 
@@ -156,16 +161,22 @@ See the "grep" section of the Mocha documentation: https://mochajs.org/#-grep-re
 
 > Cause Mocha to only run tests matching the given regexp, which is internally compiled to a [RegExp](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Regexp).
 
+Run with environment variable `MOCHA_REMOTE_GREP=whatever` to provide a default grep expression.
+
 ### Invert
 
 See the "invert" section of the Mocha documentation: https://mochajs.org/#-invert
 
 > Use the inverse of the match specified by --grep
 
+Run with environment variable `MOCHA_REMOTE_INVERT=true` to invert grep by default.
+
 ### Reporter and reporter options
 
 See the "reporters" section of the Mocha documentation for more information on these:
  https://mochajs.org/#reporters
+
+Run with environment variable `MOCHA_REMOTE_REPORTER=min` to provide a default reporter (in this case "min").
 
 ## Alternatively: Installing the server (for a programatic API)
 
