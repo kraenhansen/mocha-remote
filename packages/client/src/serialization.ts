@@ -1,4 +1,4 @@
-import { Test, Suite } from "mocha-remote-mocha";
+import { Test, Suite, Hook } from "mocha-remote-mocha";
 import flatted from "flatted";
 import deepEquals from "fast-deep-equal";
 
@@ -14,6 +14,7 @@ export type TypedObjectCache = WeakMap<object, TypedObject>;
 const types = {
   test: Test,
   suite: Suite,
+  hook: Hook,
   error: Error,
 };
 

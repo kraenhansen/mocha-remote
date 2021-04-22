@@ -1,9 +1,10 @@
-import { Test, Suite } from "mocha";
+import { Test, Suite, Hook } from "mocha";
 import flatted from "flatted";
 
 const types = {
   test: Test,
   suite: Suite,
+  hook: Hook,
   error: Error,
 };
 
@@ -21,7 +22,11 @@ function createObject($type: unknown) {
   if (typeof $type === "string") {
     debug("createObject called with $type = %s", $type);
     const constructor = types[$type as keyof typeof types];
-    return Object.create(constructor.prototype, {});
+    if (constructor) {
+      return Object.create(constructor.prototype, {});
+    } else {
+      throw new Error(`Unexpected $type '${$type}'`);
+    }
   } else {
     return {};
   }

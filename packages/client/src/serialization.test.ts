@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Suite, Test } from "mocha-remote-mocha";
+import { Suite, Test, Hook } from "mocha-remote-mocha";
 import { parse } from "flatted";
 
 import { serialize, createReplacer } from "./serialization";
@@ -59,18 +59,33 @@ describe("Client serialization", () => {
     }
   });
 
-  it("can serialize a Test with a parent Suite", () => {
+  it("can serialize a Test with a parent Suite and beforeAll hook", () => {
     const test = new Test("test title");
     const suite = new Suite("root suite");
+    suite.beforeAll(() => {
+      // eslint-disable-next-line no-console
+      console.log("Before hook ran");
+    });
     test.parent = suite;
     suite.tests = [ test ];
     {
       // Serializing the first time should return an object with $type and $properties
       const result = serialize(test);
+      // Test
       const parsed = parse(result);
       expect(parsed).has.keys("$ref", "$type", "$properties");
+      expect(parsed.$type).equals("test");
+      // Parent
       const parent = parsed.$properties.parent;
       expect(parent).has.keys("$ref", "$type", "$properties");
+      expect(parent.$type).equals("suite");
+      // Hook
+      const beforeAll = parent.$properties._beforeAll;
+      expect(beforeAll.length).equals(1);
+      const [ firstHook ] = beforeAll;
+      expect(firstHook).has.keys("$ref", "$type", "$properties");
+      expect(firstHook.$type).equals("hook");
+      // Recursive test
       const tests = parent.$properties.tests;
       expect(parsed.$ref).equals(tests[0].$ref);
       expect(tests[0]).has.keys("$ref", "$type", "$properties");

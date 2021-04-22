@@ -81,6 +81,12 @@ describe("Server serialization", () => {
           $ref: 1,
           $type: "suite",
           $properties: {
+            title: "root",
+            _beforeAll: [{
+              $ref: 2,
+              $type: "hook",
+              $properties: {}
+            }],
             tests: []
           }
         }
@@ -91,6 +97,8 @@ describe("Server serialization", () => {
     const parent = result.parent as Suite;
     expect(parent).instanceOf(Suite);
     expect(parent.tests[0]).equals(result);
+    // Ensure the Test is correctly inheriting Runnable
+    expect(result.titlePath()).deep.equals(["root", "dummy test"]);
   });
 
   it("can deserialize an Error", () => {
