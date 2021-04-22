@@ -44,7 +44,8 @@ describe("Mocha Remote CLI", () => {
 
   it("propagates context to client", () => {
     // Supports multiple --context / -c runtime flags and multiple pairs in each
-    const output = cli("--port", "0", "--context", "k1=v1,k2=v2", "-c", "k3=v3,truthy", "--", "ts-node", "src/test/context-logging-client.ts");
+    // Using --silent to parse output of the command in isolation
+    const output = cli("--port", "0", "--silent", "--context", "k1=v1,k2=v2", "-c", "k3=v3,truthy", "--", "ts-node", "src/test/context-logging-client.ts");
     const jsonOuput = parseJsonOutput(output.stdout);
     expect(jsonOuput).deep.equals({ k1: "v1", k2: "v2", k3: "v3", truthy: true });
   });
