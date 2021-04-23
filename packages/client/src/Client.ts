@@ -41,21 +41,45 @@ type MochaOptions = {
 };
 
 export type ClientConfig = {
-  /** The URL of the Mocha Remote Server to connect to */
+  /**
+   * The URL of the Mocha Remote Server to connect to.
+   * @default "ws://localhost:8090"
+   */
   url: string;
-  /** The id to present to the server */
+  /**
+   * The id to present to the server.
+   * @default "default"
+   */
   id: string;
-  /** Title of the root suite */
+  /**
+   * Title of the root suite.
+   * @default ""
+   */
   title: string;
-  /** Connect automatically when client is constructed */
+  /**
+   * Connect automatically when client is constructed.
+   * @default true
+   */
   autoConnect: boolean;
-  /** Re-connect automatically if the client gets disconnected */
+  /**
+   * Re-connect automatically if the client gets disconnected.
+   * @default true
+   */
   autoReconnect: boolean;
-  /** Disconnect after a run has ended */
+  /**
+   * Disconnect after a run has ended.
+   * @default true
+   */
   autoDisconnect: boolean;
-  /** Delay between attempts to reconnect */
+  /**
+   * Delay between attempts to reconnect (in milliseconds).
+   * @default 1000
+   */
   reconnectDelay: number;
-  /** The UI (i.e. "describe", "test", "it", etc.) to present to tests */
+  /**
+   * The UI (i.e. "describe", "test", "it", etc.) to present to tests.
+   * @default "bdd"
+   */
   ui: InterfaceConfig;
   /** A funcion called to load tests */
   tests(context: CustomContext): void,
