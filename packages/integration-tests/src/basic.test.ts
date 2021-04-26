@@ -88,17 +88,11 @@ describe("basic", () => {
       id: "a-non-default-id",
       port: 0
     });
-    // Throw if a client connects
-    server.once("connection", () => {
-      throw new Error("Client connected unexpectedly");
-    })
     await server.start();
     // Let's instrument the mocha instance and resolve a promise when the tests start
     await new Promise<void>(resolve => {
       // Create a client - which is supposed to run where the tests are running
-      client = new Client({
-        url: server.url,
-      });
+      client = new Client({ url: server.url });
       client.once("disconnection", ({ code, reason }) => {
         expect(code).to.equal(1002);
         expect(reason).to.equal(

@@ -35,6 +35,7 @@ describe("reconnecting client", () => {
       let runningCounter = 0;
       client = new Client({
         reconnectDelay,
+        autoDisconnect: false,
         tests: () => {
           delete require.cache[sampleTestPath];
           require(sampleTestPath);
