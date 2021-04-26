@@ -18,14 +18,15 @@ function parseKeyValues(opts: string[]): KeyValues {
   // Split on , since element might contain multiple key,value pairs
   // Flat because the parameter might be included multiple times
   const pairs = opts.map(value => value.split(",")).flat();
-  return Object.fromEntries(pairs.map(pair => {
+  const splitPairs = pairs.map(pair => {
     const [key, value] = pair.split("=");
     if (typeof value === "string" && value.length > 0) {
       return [key, value];
     } else {
       return [key, true];
     }
-  }));
+  }).filter(([k]) => k !== "");
+  return Object.fromEntries(splitPairs);
 }
 
 function exitCause(code: number | null, signal: string | null) {
