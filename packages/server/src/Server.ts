@@ -29,6 +29,18 @@ function createPromiseHandle() {
   return { promise, resolve };
 }
 
+/**
+ * An error thrown by a connected client
+ */
+export class ClientError extends Error {
+  public readonly ws: WebSocket;
+
+  constructor(message: string, ws: WebSocket) {
+    super(message);
+    this.ws = ws;
+  }
+}
+
 export interface ServerConfig {
   /** Network hostname to use when istening for clients */
   host: string;
@@ -101,7 +113,7 @@ export class Server extends ServerEventEmitter {
         port: this.config.port
       });
       // When a client connects
-      this.wss.on("connection", this.onConnection);
+      this.wss.on("connection", this.handleConnection);
       // When the server starts listening
       this.wss.once("listening", () => {
         this.debug(`Server is listening on ${this.url}`);
@@ -262,7 +274,7 @@ export class Server extends ServerEventEmitter {
     }
   }
 
-  private onConnection = (ws: WebSocket, req: http.IncomingMessage) => {
+  private handleConnection = (ws: WebSocket, req: http.IncomingMessage) => {
     this.debug("Client connected");
     // Check that the protocol matches
     const expectedProtocol = `mocha-remote-${this.config.id}`;
@@ -291,7 +303,7 @@ export class Server extends ServerEventEmitter {
     }
     // Hang onto the client
     this.client = ws;
-    this.client.on("message", this.onMessage.bind(this, this.client));
+    this.client.on("message", this.handleMessage.bind(this, this.client));
     // If we already have a runner, it can run now that we have a client
     if (this.runner) {
       if (this.clientOptions) {
@@ -307,7 +319,7 @@ export class Server extends ServerEventEmitter {
     }
   };
 
-  private onMessage = (ws: WebSocket, message: string) => {
+  private handleMessage = (ws: WebSocket, message: string) => {
     try {
       const msg = deserialize(message) as ServerMessage;
       if (typeof msg.action !== "string") {
@@ -328,7 +340,8 @@ export class Server extends ServerEventEmitter {
         if (typeof msg.message !== "string") {
           throw new Error("Expected 'error' action to have an error argument with a message");
         }
-        // TODO: Emit an error event
+        const err = new ClientError(msg.message, ws);
+        this.emit("error", err);
       } else {
         const { action } = msg;
         throw new Error(`Unexpected action "${action}"`);

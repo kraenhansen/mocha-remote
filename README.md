@@ -78,15 +78,24 @@ Options:
                                             for clients          [default: 8090]
   -I, --id                                  Connections not matching this will
                                             be closed       [default: "default"]
+  -g, --grep                                Only run tests matching this string
+                                            or regexp                   [string]
+  -i, --invert                              Inverts --grep matches
+                                                      [boolean] [default: false]
   -w, --watch                               Keep the server running after a test
                                             has ended [boolean] [default: false]
   -c, --context                             Runtime context sent to client when
                                             starting a run (<k=v,[k1=v1,..]>)
-                                                                         [array]
+                                                           [array] [default: []]
   -R, --reporter                            Specify reporter to use
                                                                [default: "spec"]
   -O, --reporter-option,                    Reporter-specific options
-  --reporter-options                        (<k=v,[k1=v1,..]>)           [array]
+  --reporter-options                        (<k=v,[k1=v1,..]>)
+                                                           [array] [default: []]
+  -s, --silent                              Print less to stdout
+                                                      [boolean] [default: false]
+  -e, --exit-on-error                       Exit immediately if an error occurs
+                                                      [boolean] [default: false]
   -v, --version                             Show version number & exit [boolean]
   -h, --help                                Show help                  [boolean]
 ```
@@ -177,6 +186,10 @@ See the "reporters" section of the Mocha documentation for more information on t
  https://mochajs.org/#reporters
 
 Run with environment variable `MOCHA_REMOTE_REPORTER=min` to provide a default reporter (in this case "min").
+
+### Exit on error
+
+If an error occurs client-side, while loading tests, you might want to ensure your CI job fails instead of simply reporting "0 passing". To get this behavior, run with `--exit-on-error` (or `MOCHA_REMOTE_EXIT_ON_ERROR=true`).
 
 ## Alternatively: Installing the server (for a programatic API)
 

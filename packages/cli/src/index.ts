@@ -9,7 +9,7 @@ import { inspect } from "util";
 const packageJsonPath = path.join(__dirname, "..", "package.json");
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-import { Server, ReporterOptions, CustomContext, WebSocket } from "mocha-remote-server";
+import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "mocha-remote-server";
 
 type KeyValues = { [key: string]: string | true };
 type Logger = (...args: unknown[]) => void;
@@ -39,8 +39,15 @@ function exitCause(code: number | null, signal: string | null) {
   }
 }
 
+type ServerOptions = {
+  log: Logger;
+  server: Server;
+  command?: string[];
+  exitOnError?: boolean;
+};
+
 // Start the server
-export async function startServer(log: Logger, server: Server, command?: string[]): Promise<void> {
+export async function startServer({ log, server, command, exitOnError }: ServerOptions): Promise<void> {
   server.on('started', server => {
     const url = server.url;
     log(
@@ -67,11 +74,24 @@ export async function startServer(log: Logger, server: Server, command?: string[
   });
 
   server.on("error", (error) => {
-    /* eslint-disable-next-line no-console */
-    console.error(
-      chalk.red("ERROR"),
-      `${error.message || "Missing a message"}`,
-    );
+    if (error instanceof ClientError) {
+      /* eslint-disable-next-line no-console */
+      console.error(
+        displayClient(error.ws),
+        chalk.red("ERROR"),
+        `${error.message || "Missing a message"}`,
+      );
+    } else {
+      /* eslint-disable-next-line no-console */
+      console.error(
+        chalk.red("ERROR"),
+        `${error.message || "Missing a message"}`,
+      );
+    }
+    // Exit right away
+    if (exitOnError) {
+      process.exit(1);
+    }
   });
 
   await server.start();
@@ -196,6 +216,12 @@ export function run(args = hideBin(process.argv)): void {
       alias: 's',
       default: process.env.MOCHA_REMOTE_SILENT === "true",
     })
+    .option('exit-on-error', {
+      type: 'boolean',
+      description: 'Exit immediately if an error occurs',
+      alias: 'e',
+      default: process.env.MOCHA_REMOTE_EXIT_ON_ERROR === "true",
+    })
     .command('$0 [command...]', 'Start the Mocha Remote Server', ({ argv }) => {
       function log(...args: unknown[]) {
         if (!argv.silent) {
@@ -236,7 +262,12 @@ export function run(args = hideBin(process.argv)): void {
       // Extract any command given as positional argument
       const command = argv._.map(v => v.toString());
 
-      startServer(log, server, command).then(
+      startServer({
+        log,
+        server,
+        command,
+        exitOnError: argv.exitOnError as boolean,
+      }).then(
         () => {
           if (!argv.watch) {
             // Run once and exit with the failures as exit code

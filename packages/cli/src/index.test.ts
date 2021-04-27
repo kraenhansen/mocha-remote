@@ -61,6 +61,12 @@ describe("Mocha Remote CLI", () => {
     expect(output.status).equals(1);
   });
 
+  it("exits on error when asked", () => {
+    const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/throwing-client.ts");
+    expect(output.stderr).contains("ERROR b00m!");
+    expect(output.status).equals(1);
+  });
+
   it("greps tests", () => {
     const output = cli("--port", "0", "--grep", "not matching", "--", "ts-node", "src/test/simple-client.ts");
     expect(output.stdout).contains("0 passing");
