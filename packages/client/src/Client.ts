@@ -406,18 +406,18 @@ export class Client extends ClientEventEmitter {
         throw new MalformedMessageError(`Unexpected action '${action}'`);
       }
     } catch (err) {
+      this.emit("error", err);
+      this.send({ action: "error", message: err.message }, false);
       if (err instanceof MalformedMessageError) {
         this.debug(`Remote Mocha Client received a malformed message: ${err.message}`);
-        this.send({ action: "error", message: err.message });
-        this.emit("error", err);
-      } else {
-        this.emit("error", err);
+      } else if (this.listenerCount("error") === 0) {
+        // Rethrowing to avoid swollowing the error, leading to hard to catch bugs
         throw err;
       }
     }
   };
 
-  private send(msg: ServerMessage) {
+  private send(msg: ServerMessage, throwOnClosed = true) {
     if (this.ws && this.ws.readyState === Client.WebSocket.OPEN) {
       if (msg.action === "event") {
         this.debug(`Sending a 'event' (${msg.name}) message`);
@@ -426,7 +426,7 @@ export class Client extends ClientEventEmitter {
       }
       const data = serialize(msg);
       this.ws.send(data);
-    } else {
+    } else if (throwOnClosed) {
       throw new SendMessageFailure(msg, "WebSocket is closed");
     }
   }

@@ -192,12 +192,14 @@ describe("Mocha Remote Client", () => {
       expect(serverConnections).equals(expectedRetries);
     });
 
+    /*
     it.skip("throws when disconnected while reconnecting", async () => {
       const client = new Client({ url, reconnectDelay });
     });
+    */
 
     it("runs tests when asked", async () => {
-      wss.on("connection", ws => {
+      wss.on("connection", ws =>  {
         ws.send(flatted.stringify({
           action: "run",
           options: {
@@ -242,6 +244,42 @@ describe("Mocha Remote Client", () => {
           resolve();
         });
       });
+    });
+
+    it("emits error when loading of tests fail", async () => {
+      const clientResponse = new Promise<void>(resolve => {
+        wss.on("connection", ws => {
+          ws.send(flatted.stringify({
+            action: "run",
+            options: {},
+          }));
+
+          ws.on("message", data => {
+            const msg = flatted.parse(data as string);
+            expect(msg.action).equals("error");
+            expect(msg.message).equals("b00m!");
+            resolve();
+          });
+        });
+      });
+
+      await new Promise<void>(resolve => {
+        const client = new Client({
+          url,
+          autoReconnect: false,
+          tests: () => {
+            throw new Error("b00m!");
+          },
+        });
+
+        client.once("error", err => {
+          expect(err).instanceof(Error);
+          expect(err.message).equals("b00m!");
+          resolve();
+        });
+      });
+
+      await clientResponse;
     });
 
     it("emits error on malformed messages", async () => {
