@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-cli",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "main": "dist/index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "debug": "^4.3.1",
-    "mocha-remote-server": "^1.1.1",
+    "mocha-remote-server": "^1.2.0",
     "yargs": "^16.2.0"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "@types/node": "^10",
     "@types/yargs": "^16.0.1",
     "mocha": "../../node_modules/mocha",
-    "mocha-remote-client": "^1.1.1",
+    "mocha-remote-client": "^1.2.0",
     "ts-node": "../../node_modules/ts-node",
     "typescript": "../../node_modules/typescript"
   },
