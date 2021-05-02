@@ -25,13 +25,13 @@ describe("Mocha Remote CLI", () => {
   });
 
   it("run the command after -- and propagates exit status code", () => {
-    const output = cli("--port", "0", "--", "node", "--eval", "console.log('hello!');process.exit(13);");
+    const output = cli("--port", "0", "--", "node", "--eval", "\"console.log('hello!');process.exit(13);\"");
     expect(output.stdout).contains("hello!");
     expect(output.status).equals(13, "expected signal to propagate");
   });
 
   it("expose url, port and id as environment variables", () => {
-    const output = cli("--port", "0", "--", "node", "--print", "JSON.stringify(process.env)");
+    const output = cli("--port", "0", "--", "node", "--print", "\"JSON.stringify(process.env)\"");
     const jsonOuput = parseJsonOutput(output.stdout);
     expect(jsonOuput).include.keys("MOCHA_REMOTE_URL", "MOCHA_REMOTE_ID");
     const MOCHA_REMOTE_URL: string = jsonOuput.MOCHA_REMOTE_URL;
