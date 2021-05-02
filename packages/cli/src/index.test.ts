@@ -55,18 +55,6 @@ describe("Mocha Remote CLI", () => {
     expect(output.stdout).contains("CONNECTION from 127.0.0.1");
   });
 
-  it("propagates failures as exit code", () => {
-    const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "ts-node", "src/test/simple-client.ts");
-    expect(output.stdout).contains("Totally expected");
-    expect(output.status).equals(1);
-  });
-
-  it("exits on error when asked", () => {
-    const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/throwing-client.ts");
-    expect(output.stderr).contains("ERROR b00m!");
-    expect(output.status).equals(1);
-  });
-
   it("greps tests", () => {
     const output = cli("--port", "0", "--grep", "not matching", "--", "ts-node", "src/test/simple-client.ts");
     expect(output.stdout).contains("0 passing");
@@ -85,5 +73,31 @@ describe("Mocha Remote CLI", () => {
     expect(output.stdout).contains("Running client #1");
     expect(output.stdout).contains("Running client #2");
     expect(output.status).equals(0);
+  });
+
+  describe("failures", () => {
+    it("propagates failures as exit code", () => {
+      const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "ts-node", "src/test/simple-client.ts");
+      expect(output.stdout).contains("Totally expected");
+      expect(output.status).equals(1);
+    });
+
+    it("exits on error when asked", () => {
+      const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/throwing-client.ts");
+      expect(output.stderr).contains("ERROR b00m!");
+      expect(output.status).equals(1);
+    });
+
+    it("exits unclean if client dies early", () => {
+      const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/exit-shield.ts", "100", "ts-node", "src/test/crashing-client.ts", "early");
+      expect(output.stderr).contains("DISCONNECTION").contains("code = 1006");
+      expect(output.status).equals(1);
+    });
+
+    it("exits unclean if client dies later", () => {
+      const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/exit-shield.ts", "100", "ts-node", "src/test/crashing-client.ts", "later");
+      expect(output.stderr).contains("DISCONNECTION").contains("code = 1006");
+      expect(output.status).equals(1);
+    });
   });
 });

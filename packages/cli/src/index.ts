@@ -71,6 +71,10 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     const color = code === 1000 ? chalk.green : chalk.yellow;
     const msg = code === 1000 ? "normal closure" : reason || "for no particular reason";
     print(displayClient(ws), color("DISCONNECTION"), `${msg} (code = ${code})`);
+    if (code !== 1000 && exitOnError) {
+      print(displayClient(ws), chalk.red("EXITTING"), "after an abnormal disconnect");
+      process.exit(1);
+    }
   });
 
   server.on("error", (error) => {
