@@ -21,6 +21,7 @@ export default [{
     }),
     typescript({
       module: "esnext",
+      exclude: ["src/**/*.test.ts"]
     }),
   ],
   external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client", "ws"],
@@ -36,7 +37,8 @@ export default [{
     }),
     commonjs(),
     typescript({
-      module: "esnext"
+      module: "esnext",
+      exclude: ["src/**/*.test.ts"]
     }),
   ],
   external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client"],

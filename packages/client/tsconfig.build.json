@@ -1,0 +1,6 @@
+{
+  "extends": ".",
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
+}
