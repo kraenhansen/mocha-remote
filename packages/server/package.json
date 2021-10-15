@@ -32,7 +32,7 @@
     "debug": "^4.3.1",
     "flatted": "^3.1.1",
     "mocha-remote-common": "^1.4.3",
-    "ws": "^7.4.4"
+    "ws": "^7.4.6"
   },
   "peerDependencies": {
     "mocha": "^8"
