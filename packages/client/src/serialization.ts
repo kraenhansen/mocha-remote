@@ -1,6 +1,6 @@
 import { Test, Suite, Hook } from "mocha-remote-mocha";
-import flatted from "flatted";
-import deepEquals from "fast-deep-equal";
+import * as flatted from "flatted";
+import * as deepEquals from "fast-deep-equal";
 
 import { extend } from "./debug";
 const debug = extend("serialization");

@@ -1,7 +1,7 @@
 import type { ServerMessage, ClientMessage, MochaConfig, CustomContext } from "mocha-remote-common";
 import { Context, Runner, Suite, interfaces, Interface, createStatsCollector } from "mocha-remote-mocha";
 import type { EventEmitter } from "events";
-import flatted from "flatted";
+import * as flatted from "flatted";
 
 import { extend, Debugger } from "./debug";
 import { ClientEventEmitter, ClientEvents, DisconnectParams } from "./ClientEventEmitter";
