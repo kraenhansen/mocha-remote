@@ -58,6 +58,36 @@ describe("Mocha Remote Client", () => {
     expect(ran).deep.equals(["a", "b"]);
   });
 
+  it("propagates 'timeout' and 'slow'", async () => {
+    const TIMEOUT = 10;
+    const SLOW = TIMEOUT / 2;
+    const client = new Client({
+      autoConnect: false,
+      timeout: TIMEOUT,
+      slow: SLOW,
+      tests: () => {
+        it("is slow", async () => {
+          await new Promise(resolve => setTimeout(resolve, TIMEOUT + 10));
+        });
+      }
+    });
+
+    const runner = await new Promise<Mocha.Runner>(resolve => {
+      const runner = client.run(() => {
+        resolve(runner);
+      });
+    })
+
+    expect(runner.failures).equals(1);
+    const [test] = runner.suite.tests;
+    // Assert the configuration propagates to the tests
+    expect(test.timeout()).equals(TIMEOUT);
+    expect(test.slow()).equals(SLOW);
+    // Assert the test has failed due to a timeout
+    expect(test.isFailed()).equals(true);
+    expect(test.timedOut).equals(true);
+  });
+
   it("calls tests with a context", async () => {
     const recursive: Record<string, unknown> = {};
     recursive.child = recursive;

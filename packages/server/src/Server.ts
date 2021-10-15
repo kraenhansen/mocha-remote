@@ -60,6 +60,10 @@ export interface ServerConfig {
   grep: string | undefined;
   /** Inverts grep matches */
   invert: boolean | undefined;
+  /** Tests needs to complete before this timeout threshold (in milliseconds) */
+  timeout: number | undefined;
+  /** Specifies "slow" test threshold (in milliseconds) */
+  slow: number | undefined;
   /** Runtime context sent to client when starting a run */
   context: CustomContext | undefined;
 }
@@ -76,6 +80,8 @@ export class Server extends ServerEventEmitter {
     grep: undefined,
     invert: undefined,
     context: undefined,
+    timeout: undefined,
+    slow: undefined,
   };
 
   private static debugCounter = 0;
@@ -185,11 +191,15 @@ export class Server extends ServerEventEmitter {
     this.clientOptions = {
       grep: this.config.grep,
       invert: this.config.invert,
+      timeout: this.config.timeout,
+      slow: this.config.slow,
       context: {
         ...this.config.context,
         ...context,
       },
     };
+
+    this.debug(this.clientOptions);
 
     // We need to access the private _reporter field
     const Reporter = this.determineReporterConstructor(this.config.reporter);

@@ -3,7 +3,9 @@ export type CustomContext = Record<string, unknown>;
 export type MochaConfig = {
   grep?: RegExp | string;
   invert?: boolean;
-  context?: CustomContext
+  context?: CustomContext;
+  timeout?: number;
+  slow?: number;
 };
 
 export type ErrorMessage = { action: "error", message: string };

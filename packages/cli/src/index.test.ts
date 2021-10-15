@@ -1,6 +1,7 @@
 import cp from "child_process";
 import path from "path";
 import { expect } from "chai";
+import { it } from "mocha";
 
 const cliPath = path.resolve(__dirname, "./index.ts");
 
@@ -65,6 +66,13 @@ describe("Mocha Remote CLI", () => {
     const output = cli("--port", "0", "--grep", "not matching", "--invert", "--", "ts-node", "src/test/simple-client.ts");
     expect(output.stdout).contains("1 passing");
     expect(output.status).equals(0);
+  });
+
+  it("propagates 'timeout'", () => {
+    const output = cli("--port", "0", "--context", "wait=20", "--timeout", "10", "--", "ts-node", "src/test/simple-client.ts");
+    expect(output.stdout).contains("1 failing");
+    expect(output.stdout).contains("Timeout of 10ms exceeded");
+    expect(output.status).equals(1);
   });
 
   it("allows re-running in watch mode", () => {

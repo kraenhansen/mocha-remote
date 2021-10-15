@@ -190,6 +190,18 @@ export function run(args = hideBin(process.argv)): void {
       default: process.env.MOCHA_REMOTE_INVERT === "true",
       alias: 'i',
     })
+    .option('slow', {
+      type: 'number',
+      alias: 's',
+      description: 'Specify "slow" test threshold (in milliseconds)',
+      default: 75,
+    })
+    .option('timeout', {
+      type: 'number',
+      alias: ['t', 'timeouts'],
+      description: 'Specify test timeout threshold (in milliseconds)',
+      default: 2000,
+    })
     .option('watch', {
       description: 'Keep the server running after a test has ended',
       type: 'boolean',
@@ -218,7 +230,6 @@ export function run(args = hideBin(process.argv)): void {
     .option('silent', {
       type: 'boolean',
       description: 'Print less to stdout',
-      alias: 's',
       default: process.env.MOCHA_REMOTE_SILENT === "true",
     })
     .option('exit-on-error', {
@@ -262,6 +273,8 @@ export function run(args = hideBin(process.argv)): void {
         context: argv.context as unknown as CustomContext,
         grep: argv.grep,
         invert: argv.invert,
+        timeout: argv.timeout,
+        slow: argv.slow,
       });
 
       // Extract any command given as positional argument

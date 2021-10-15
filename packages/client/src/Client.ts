@@ -38,6 +38,8 @@ type MochaOptions = {
   delay?: boolean;
   invert?: boolean;
   context?: CustomContext;
+  timeout?: number;
+  slow?: number;
 };
 
 export type ClientConfig = {
@@ -153,8 +155,11 @@ export class Client extends ClientEventEmitter {
     this.debug("Constructing a client");
     this.config = {  ...Client.DEFAULT_CONFIG, ...config };
     this.suite = Client.createRootSuite(this.config.title);
+    
     this.context(this.config.context);
     this.grep(this.config.grep);
+    this.timeout(this.config.timeout);
+    this.slow(this.config.slow);
     this.bindInterface();
     if (this.config.autoConnect) {
       this.connect();
@@ -246,6 +251,14 @@ export class Client extends ClientEventEmitter {
     };
 
     this.reset();
+
+    if (typeof options.timeout === "number") {
+      this.suite.timeout(options.timeout);
+    }
+    if (typeof options.slow === "number") {
+      this.suite.slow(options.slow);
+    }
+    
     this.loadFile(options.context);
 
     const runner = new Runner(this.suite, false);
@@ -301,6 +314,16 @@ export class Client extends ClientEventEmitter {
 
   public grep(value: RegExp | string | undefined): this {
     this.options.grep = Client.parseGrep(value);
+    return this;
+  }
+
+  public timeout(value: number | undefined): this {
+    this.options.timeout = value;
+    return this;
+  }
+
+  public slow(value: number | undefined): this {
+    this.options.slow = value;
     return this;
   }
 
