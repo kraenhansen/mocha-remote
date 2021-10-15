@@ -194,13 +194,13 @@ export function run(args = hideBin(process.argv)): void {
       type: 'number',
       alias: 's',
       description: 'Specify "slow" test threshold (in milliseconds)',
-      default: 75,
+      default: parseInt(process.env.MOCHA_REMOTE_SLOW || "75", 10),
     })
     .option('timeout', {
       type: 'number',
       alias: ['t', 'timeouts'],
       description: 'Specify test timeout threshold (in milliseconds)',
-      default: 2000,
+      default: parseInt(process.env.MOCHA_REMOTE_TIMEOUT || "2000", 10),
     })
     .option('watch', {
       description: 'Keep the server running after a test has ended',
