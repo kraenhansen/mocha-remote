@@ -1,8 +1,9 @@
-import Debug, { Debugger } from "debug";
+import { Debugger, debug } from "debug";
+
 export type { Debugger };
 
-const debug = Debug('mocha-remote:client');
+const mochaDebug = debug('mocha-remote:client');
 
-export function extend(namespace: string): Debug.Debugger {
-  return debug.extend(namespace);
+export function extend(namespace: string): Debugger {
+  return mochaDebug.extend(namespace);
 }

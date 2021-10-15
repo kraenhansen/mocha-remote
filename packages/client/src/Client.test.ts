@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import ws from "ws";
-import flatted from "flatted";
+import * as ws from "ws";
+import * as flatted from "flatted";
 
 import { Client } from './Client';
 

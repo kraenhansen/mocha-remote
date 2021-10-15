@@ -1,6 +1,6 @@
 import { Test, Suite, Hook } from "mocha-remote-mocha";
 import * as flatted from "flatted";
-import * as deepEquals from "fast-deep-equal";
+import { deepEqual } from "fast-equals";
 
 import { extend } from "./debug";
 const debug = extend("serialization");
@@ -62,7 +62,7 @@ export function createReplacer(): Replacer {
         const cached = cache.get(value);
         const $properties = toJSON(value as Record<string, unknown>);
         if (cached) {
-          if (deepEquals(cached.$properties, $properties)) {
+          if (deepEqual(cached.$properties, $properties)) {
             // TODO: Make sure this object is reused to allow flatted to detect a cycle
             const result = { $ref: cached.$ref };
             localCache.set(value, result);
