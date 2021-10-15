@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-client",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "tsc --project tsconfig.build.json --emitDeclarationOnly && rollup -c",
@@ -43,7 +43,7 @@
   "dependencies": {
     "debug": "^4.3.1",
     "fast-equals": "^2.0.3",
-    "mocha-remote-common": "^1.4.0",
+    "mocha-remote-common": "^1.4.2",
     "ws": "^7.4.4"
   },
   "eslintConfig": {
