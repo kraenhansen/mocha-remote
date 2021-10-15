@@ -8,7 +8,8 @@
   "scripts": {
     "build": "echo 'Nothing to build in the combined package'",
     "prepare": "npm run build",
-    "prepack": "cp ../../README.md ."
+    "prepack": "cp ../../README.md .",
+    "test": "echo 'No tests to run'"
   },
   "author": {
     "name": "Kræn Hansen",
