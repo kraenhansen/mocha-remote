@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "bin": "cli.js",
   "main": "index.js",
@@ -23,9 +23,9 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
-    "mocha-remote-cli": "^1.4.2",
-    "mocha-remote-client": "^1.4.2",
-    "mocha-remote-server": "^1.4.2"
+    "mocha-remote-cli": "^1.4.3",
+    "mocha-remote-client": "^1.4.3",
+    "mocha-remote-server": "^1.4.3"
   },
   "eslintConfig": {
     "env": {

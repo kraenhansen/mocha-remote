@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-integration-tests",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "private": true,
   "description": "The integration tests of the project",
   "scripts": {
@@ -16,8 +16,8 @@
     "url": "https://github.com/kraenhansen"
   },
   "dependencies": {
-    "mocha-remote-client": "^1.4.2",
-    "mocha-remote-server": "^1.4.2"
+    "mocha-remote-client": "^1.4.3",
+    "mocha-remote-server": "^1.4.3"
   },
   "devDependencies": {
     "mocha": "../../node_modules/mocha"
