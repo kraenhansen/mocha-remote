@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import TypedEmitter, { Arguments } from "typed-emitter";
+import TypedEmitter from "typed-emitter";
 import type WebSocket from "ws";
 import type http from "http";
 import type { Debugger } from "debug";
@@ -72,7 +72,7 @@ export class ServerEventEmitter implements TypedEmitter<MessageEvents> {
     return this;
   }
 
-  public emit<E extends keyof MessageEvents>(event: E, ...args: Arguments<MessageEvents[E]>): boolean {
+  public emit<E extends keyof MessageEvents>(event: E, ...args: Parameters<MessageEvents[E]>): boolean {
     return this.emitter.emit.call(this.emitter, event, ...args);
   }
 
@@ -85,14 +85,12 @@ export class ServerEventEmitter implements TypedEmitter<MessageEvents> {
     return this.emitter.getMaxListeners.call(this.emitter);
   }
 
-  /* eslint-disable-next-line @typescript-eslint/ban-types */
-  public listeners<E extends keyof MessageEvents>(event: E): (Function)[] {
-    return this.emitter.listeners.call(this.emitter, event);
+  public listeners<E extends keyof MessageEvents>(event: E): MessageEvents[E][] {
+    return this.emitter.listeners.call(this.emitter, event) as MessageEvents[E][];
   }
 
-  /* eslint-disable-next-line @typescript-eslint/ban-types */
-  public rawListeners<E extends keyof MessageEvents>(event: E): Function[] {
-    return this.emitter.rawListeners.call(this.emitter, event);
+  public rawListeners<E extends keyof MessageEvents>(event: E): MessageEvents[E][] {
+    return this.emitter.rawListeners.call(this.emitter, event) as MessageEvents[E][];
   }
 
   public listenerCount<E extends keyof MessageEvents>(event: E): number {

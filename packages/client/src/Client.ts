@@ -375,7 +375,7 @@ export class Client extends ClientEventEmitter {
       if (err instanceof MalformedMessageError) {
         throw err;
       } else {
-        throw new MalformedMessageError("Failed to parse flatted JSON", err);
+        throw new MalformedMessageError("Failed to parse flatted JSON", err instanceof Error ? err : undefined);
       }
     }
   }
@@ -429,8 +429,13 @@ export class Client extends ClientEventEmitter {
         throw new MalformedMessageError(`Unexpected action '${action}'`);
       }
     } catch (err) {
-      this.emit("error", err);
-      this.send({ action: "error", message: err.message }, false);
+      if (err instanceof Error) {
+        this.emit("error", err);
+        this.send({ action: "error", message: err.message }, false);
+      } else {
+        // Rethrowing to avoid swollowing the error, leading to hard to catch bugs
+        throw err;
+      }
       if (err instanceof MalformedMessageError) {
         this.debug(`Remote Mocha Client received a malformed message: ${err.message}`);
       } else if (this.listenerCount("error") === 0) {

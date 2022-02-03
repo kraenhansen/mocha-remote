@@ -19,9 +19,6 @@
     "mocha-remote-client": "^1.4.3",
     "mocha-remote-server": "^1.4.3"
   },
-  "devDependencies": {
-    "mocha": "../../node_modules/mocha"
-  },
   "mocha": {
     "extension": [
       "ts"

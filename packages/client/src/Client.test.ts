@@ -326,7 +326,7 @@ describe("Mocha Remote Client", () => {
       const EXPECTED_MESSAGES = [
         "Failed to parse flatted JSON: Unexpected end of JSON input",
         "Failed to parse flatted JSON: $parse(...).map is not a function",
-        "Failed to parse flatted JSON: Cannot read property 'action' of undefined",
+        "Failed to parse flatted JSON: Cannot read properties of undefined (reading 'action')",
         "Expected an action property",
         "Unexpected action 'unexpected'",
         "Expected an options object on 'run' actions",

@@ -38,9 +38,7 @@
     "@types/yargs": "^16.0.1",
     "mocha": "../../node_modules/mocha",
     "mocha-remote-client": "^1.4.3",
-    "segfault-handler": "^1.3.0",
-    "ts-node": "../../node_modules/ts-node",
-    "typescript": "../../node_modules/typescript"
+    "segfault-handler": "^1.3.0"
   },
   "peerDependencies": {
     "mocha": "^8"
