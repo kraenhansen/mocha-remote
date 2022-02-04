@@ -20,7 +20,7 @@ describe("Mocha Remote Server", () => {
     const client = new WebSocket(server.url, protocol);
 
     client.once("message", message => {
-      const { action } = flatted.parse(message);
+      const { action } = flatted.parse(message.toString());
       if (action === "run") {
         client.send(flatted.stringify({ action: "event", name: "end" }));
       }
@@ -47,7 +47,7 @@ describe("Mocha Remote Server", () => {
     const client = new WebSocket(server.url, protocol);
 
     client.once("message", message => {
-      const { action, options } = flatted.parse(message);
+      const { action, options } = flatted.parse(message.toString());
       if (action === "run") {
         // Expect the context to propagate
         expect(options.context).deep.equals({ greeting: "hi" });

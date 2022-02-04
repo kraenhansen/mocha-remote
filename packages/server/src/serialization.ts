@@ -1,61 +1,38 @@
-import { Test, Suite, Hook } from "mocha";
 import flatted from "flatted";
-
-const types = {
-  test: Test,
-  suite: Suite,
-  hook: Hook,
-  error: Error,
-};
-
-type ValueOf<T> = T[keyof T]
-
-type Revivable = InstanceType<ValueOf<typeof types>>;
-export type ObjectCache = Map<number, Revivable>;
 
 import { extend } from "./debug";
 const debug = extend("serialization");
 
 type Reviver = (this: unknown, key: string, value: unknown) => unknown;
 
-function createObject($type: unknown) {
-  if (typeof $type === "string") {
-    debug("createObject called with $type = %s", $type);
-    const constructor = types[$type as keyof typeof types];
-    if (constructor) {
-      return Object.create(constructor.prototype, {});
-    } else {
-      throw new Error(`Unexpected $type '${$type}'`);
-    }
-  } else {
-    return {};
-  }
-}
-
 export function createReviver(): Reviver {
-  const cache: ObjectCache = new Map();
+
+  function reviveObject(obj: Record<string, unknown>) {
+    if (obj.type === "error") {
+      if (typeof obj.message === "string" && typeof obj.stack === "string") {
+        const err = new Error(obj.message);
+        err.stack = obj.stack;
+        return err;
+      } else {
+        throw new Error("Expected Error to have message and stack");
+      }
+    } else {
+      // Turn $$ properties into functions
+      for (const propertyName of Object.keys(obj).filter(name => name.startsWith("$$"))) {
+        const result = obj[propertyName];
+        obj[propertyName.substring(2)] = () => result;
+      }
+      return obj;
+    }
+  }
+
   return function reviver(this: unknown, key: string, value: unknown) {
     debug(`Reviving %s`, value);
     if (typeof value === "object" && value !== null) {
-      const { $ref, $type, $properties } = value as Record<string, unknown>;
-      if (typeof $ref === "number") {
-        const cached = cache.get($ref);
-        const result = cached || createObject($type);
-        if ($properties) {
-          // Update the properties, if needed
-          Object.assign(result, $properties);
-        }
-        if (!cached) {
-          // Store the result in the cache
-          cache.set($ref, result as Revivable);
-        }
-        return result;
-      } else {
-        // Just any other plain ol' object
-        return value;
-      }
+      return reviveObject(value as Record<string, unknown>);
+    } else {
+      return value;
     }
-    return value;
   }
 }
 

@@ -150,6 +150,10 @@ export class Server extends ServerEventEmitter {
             resolve();
           }
         });
+        // Terminate all clients
+        for (const ws of this.wss.clients) {
+          ws.terminate();
+        }
       } else {
         resolve();
       }
@@ -357,8 +361,12 @@ export class Server extends ServerEventEmitter {
         throw new Error(`Unexpected action "${action}"`);
       }
     } catch (err) {
-      this.emit("error", err);
-      this.send({ action: "error", message: err.message });
+      if (err instanceof Error) {
+        this.emit("error", err);
+        this.send({ action: "error", message: err.message });
+      } else {
+        throw err;
+      }
     }
   };
 
@@ -380,19 +388,27 @@ export class Server extends ServerEventEmitter {
         try {
           return require(reporter);
         } catch (err) {
-          if (err.code === 'MODULE_NOT_FOUND') {
-            // If the absolute require couldn't find the module, let's try resolving it as a relative path
-            return require(path.resolve(reporter));
+          if (err instanceof Error) {
+            const { code } = err as NodeJS.ErrnoException;
+            if (code === 'MODULE_NOT_FOUND') {
+              // If the absolute require couldn't find the module, let's try resolving it as a relative path
+              return require(path.resolve(reporter));
+            }
           }
-          // Rethrow
+          // Fallback to rethrow
           throw err;
         }
       } catch (err) {
-        if (err.code === 'MODULE_NOT_FOUND') {
-          throw new Error(`Unable to find reporter: '${reporter}'`);
-        } else {
-          throw new Error(`${reporter} reporter blew up with error: ${err.stack}`);
+        if (err instanceof Error) {
+          const { code, stack } = err as NodeJS.ErrnoException;
+          if (code === 'MODULE_NOT_FOUND') {
+            throw new Error(`Unable to find reporter: '${reporter}'`);
+          } else {
+            throw new Error(`${reporter} reporter blew up with error: ${stack}`);
+          }
         }
+        // Fallback to rethrow
+        throw err;
       }
     } else {
       throw new Error(`Unexpected reporter '${reporter}'`);

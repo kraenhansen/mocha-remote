@@ -1,38 +1,26 @@
-import { Test, Suite, Hook } from "mocha-remote-mocha";
 import * as flatted from "flatted";
-import { deepEqual } from "fast-equals";
 
 import { extend } from "./debug";
 const debug = extend("serialization");
 
 type Replacer = (this: unknown, key: string, value: unknown) => unknown;
-export type TypedObject = { $ref: number, $type: string, $properties?: Record<string, unknown> }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */
-export type TypedObjectCache = WeakMap<object, TypedObject>;
-
-const types = {
-  test: Test,
-  suite: Suite,
-  hook: Hook,
-  error: Error,
-};
+export type SerializedCache = WeakMap<object, Record<string, unknown>>;
 
 function toJSON(value: Record<string, unknown>): Record<string, unknown> {
   if (value instanceof Error) {
     const { message, stack } = value;
     return {
+      type: "error",
       message,
       stack: stack ? filterStack(stack) : stack,
     };
+  } else if (typeof value === "object" && typeof value.serialize === "function") {
+    return value.serialize();
   } else {
-    return { ...value };
+    return value;
   }
-}
-
-/* eslint-disable-next-line @typescript-eslint/ban-types */
-function getType(value: object) {
-  return Object.keys(types).find(key => value instanceof types[key as keyof typeof types]);
 }
 
 function filterStack(stack: string) {
@@ -40,53 +28,10 @@ function filterStack(stack: string) {
 }
 
 export function createReplacer(): Replacer {
-  let nextRef = 0;
-  // The cache ensures that a $ref is transferred instead of the entire object, it this has already crossed the network
-  const cache: TypedObjectCache = new WeakMap();
-  // The local cache ensures the same object is returned for every object throughout a serialization
-  const localCache = new Map();
   return function(this: unknown, key: string, value: unknown) {
-    if (key === "") {
-      debug("Clearing local cache");
-      localCache.clear();
-    }
     debug(`Replacing %s`, value);
     if (typeof value === "object" && value !== null) {
-      const localCached = localCache.get(value);
-      if (localCached) {
-        debug("Already relaced this object");
-        return localCached;
-      }
-      const type = getType(value);
-      if (type) {
-        const cached = cache.get(value);
-        const $properties = toJSON(value as Record<string, unknown>);
-        if (cached) {
-          if (deepEqual(cached.$properties, $properties)) {
-            // TODO: Make sure this object is reused to allow flatted to detect a cycle
-            const result = { $ref: cached.$ref };
-            localCache.set(value, result);
-            return result;
-          } else {
-            // Update the cached value with the new properties.
-            Object.assign(cached.$properties, $properties);
-            const result = { $ref: cached.$ref, $properties };
-            localCache.set(value, result);
-            return result;
-          }
-        } else {
-          const result: TypedObject = {
-            $ref: nextRef++,
-            $type: type,
-            $properties,
-          };
-          cache.set(value, result);
-          localCache.set(value, result);
-          return result;
-        }
-      } else {
-        return value;
-      }
+      return toJSON(value as Record<string, unknown>);
     } else if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
       return value;
     }

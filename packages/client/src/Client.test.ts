@@ -3,6 +3,7 @@ import * as ws from "ws";
 import * as flatted from "flatted";
 
 import { Client } from './Client';
+import { rejects } from 'assert';
 
 const reconnectDelay = 50;
 
@@ -167,8 +168,12 @@ describe("Mocha Remote Client", () => {
       }
     });
 
-    afterEach(() => {
-      wss.close();
+    afterEach(async () => {
+      // Terminate all clients
+      for (const ws of wss.clients) {
+        ws.terminate();
+      }
+      await new Promise(resolve => wss.close(resolve));
     });
 
     it("reconnects until server is up", async () => {

@@ -43,67 +43,67 @@ export class ServerEventEmitter implements TypedEmitter<MessageEvents> {
   }
 
   public addListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.addListener.call(this.emitter, event, listener);
+    this.emitter.addListener(event, listener);
     return this;
   }
 
   public removeListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.removeListener.call(this.emitter, event, listener);
+    this.emitter.removeListener(event, listener);
     return this;
   }
 
   public removeAllListeners<E extends keyof MessageEvents>(event?: E): this {
-    this.emitter.removeAllListeners.call(this.emitter, event);
+    this.emitter.removeAllListeners(event);
     return this;
   }
 
   public on<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.on.call(this.emitter, event, listener);
+    this.emitter.on(event, listener);
     return this;
   }
 
   public once<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.addListener.call(this.emitter, event, listener);
+    this.emitter.once(event, listener);
     return this;
   }
 
   public off<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.addListener.call(this.emitter, event, listener);
+    this.emitter.off(event, listener);
     return this;
   }
 
   public emit<E extends keyof MessageEvents>(event: E, ...args: Parameters<MessageEvents[E]>): boolean {
-    return this.emitter.emit.call(this.emitter, event, ...args);
+    return this.emitter.emit(event, ...args);
   }
 
   public setMaxListeners(n: number): this {
-    this.emitter.setMaxListeners.call(this.emitter, n);
+    this.emitter.setMaxListeners(n);
     return this;
   }
 
   public getMaxListeners(): number {
-    return this.emitter.getMaxListeners.call(this.emitter);
+    return this.emitter.getMaxListeners();
   }
 
   public listeners<E extends keyof MessageEvents>(event: E): MessageEvents[E][] {
-    return this.emitter.listeners.call(this.emitter, event) as MessageEvents[E][];
+    return this.emitter.listeners(event) as MessageEvents[E][];
   }
 
   public rawListeners<E extends keyof MessageEvents>(event: E): MessageEvents[E][] {
-    return this.emitter.rawListeners.call(this.emitter, event) as MessageEvents[E][];
+    return this.emitter.rawListeners(event) as MessageEvents[E][];
   }
 
   public listenerCount<E extends keyof MessageEvents>(event: E): number {
-    return this.emitter.listenerCount.call(this.emitter, event);
+    return this.emitter.listenerCount(event);
   }
 
   public prependListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.prependListener.call(this.emitter, event, listener);
+    this.emitter.prependListener(event, listener);
     return this;
   }
 
   public prependOnceListener<E extends keyof MessageEvents>(event: E, listener: MessageEvents[E]): this {
-    this.emitter.prependOnceListener.call(this.emitter, event, listener);
+    this.emitter.prependOnceListener(event, listener);
     return this;
   }
 
