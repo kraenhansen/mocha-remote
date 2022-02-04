@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-server",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -30,7 +30,7 @@
   "dependencies": {
     "debug": "^4.3.3",
     "flatted": "^3.2.5",
-    "mocha-remote-common": "^1.4.3",
+    "mocha-remote-common": "^1.5.0",
     "ws": "^8.4.2"
   },
   "peerDependencies": {
