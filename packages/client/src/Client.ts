@@ -84,7 +84,7 @@ export type ClientConfig = {
    */
   ui: InterfaceConfig;
   /** A funcion called to load tests */
-  tests(context: CustomContext): void,
+  tests(context: CustomContext): void | Promise<void>,
 } & MochaConfig;
 
 export enum ClientState {
@@ -224,20 +224,22 @@ export class Client extends ClientEventEmitter {
     }
   }
 
-  public loadFile(context: CustomContext): void {
+  public async loadFile(context: CustomContext): Promise<void> {
     this.debug("Loading tests");
     const mocha = this.mockedMocha;
     // Building a fake file path to emit some path via events
     const fakeFilePath = "/mocha-remote-client/mocked-test-suite.js";
     this.suite.emit(EVENT_FILE_PRE_REQUIRE, global, fakeFilePath, mocha);
-    // We're treating the value returned from the onLoad the `module.exports` from a file.
-    const result = this.config.tests(context);
+    // We're treating the value returned from the `result` as the `module.exports` from a file.
+    console.log("Started loading files");
+    const result = await this.config.tests(context);
+    console.log("Done loading files ...");
     this.suite.emit(EVENT_FILE_REQUIRE, result, fakeFilePath, mocha);
     this.suite.emit(EVENT_FILE_POST_REQUIRE, global, fakeFilePath, mocha);
     this.debug("Loaded %d test(s)", this.suite.total());
   }
 
-  public run(fn?: (failures: number) => void, runOptions: MochaOptions = {} ): Runner {
+  public async run(fn?: (failures: number) => void, runOptions: MochaOptions = {} ): Promise<Runner> {
     this.debug("Preparing to run test suite");
     this._state = ClientState.RUNNING;
     const options = {
@@ -259,7 +261,7 @@ export class Client extends ClientEventEmitter {
       this.suite.slow(options.slow);
     }
     
-    this.loadFile(options.context);
+    await this.loadFile(options.context);
 
     const runner = new Runner(this.suite, false);
 
@@ -417,7 +419,13 @@ export class Client extends ClientEventEmitter {
           grep: Client.parseGrep(msg.options.grep)
         }
         // Kick off a new run
-        this.run(noop, parsedOptions);
+        this.run(noop, parsedOptions).catch((err) => {
+          if (err instanceof Error) {
+            this.emit("error", err);
+          } else {
+            this.emit("error", new Error(`Caught a non-error while running: ${err}`));
+          }
+        });
       } else if (msg.action === "error") {
         if (typeof msg.message === "string") {
           this.emit("error", new Error(msg.message));
