@@ -4,7 +4,6 @@
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "tsc --project tsconfig.build.json --emitDeclarationOnly && rollup -c",
-    "prepare": "npm run build",
     "prepack": "cp ../../README.md .",
     "test": "mocha"
   },

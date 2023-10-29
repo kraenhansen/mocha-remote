@@ -5,7 +5,6 @@
   "description": "An internal simplified version of Mocha to be used from a client",
   "scripts": {
     "build": "webpack",
-    "prepare": "npm run build",
     "test": "echo 'No tests to run'"
   },
   "main": "dist/mocha.node.bundle.js",

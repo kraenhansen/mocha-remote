@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepare": "npm run build",
     "prepack": "cp ../../README.md .",
     "test": "mocha",
     "start": "ts-node src/index.ts"
