@@ -6,7 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "eslint"
+    "lint": "eslint .",
+    "build": "nx build mocha-remote"
   },
   "author": {
     "name": "Kræn Hansen",
