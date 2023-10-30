@@ -7,6 +7,15 @@
     "build": "echo 'No need to build the tests'",
     "test": "mocha **/*.test.ts"
   },
+  "nx": {
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    }
+  },
   "files": [
     "src"
   ],
@@ -16,8 +25,8 @@
     "url": "https://github.com/kraenhansen"
   },
   "dependencies": {
-    "mocha-remote-client": "^1.6.1",
-    "mocha-remote-server": "^1.6.0"
+    "mocha-remote-client": "*",
+    "mocha-remote-server": "*"
   },
   "mocha": {
     "extension": [
