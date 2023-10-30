@@ -1,10 +1,7 @@
 import { expect } from "chai";
-import Mocha from "mocha";
 
 import { Client } from "mocha-remote-client";
 import { Server } from "mocha-remote-server";
-
-import { MockedMocha } from "./utils";
 
 describe("basic", () => {
   let server: Server;
@@ -23,7 +20,10 @@ describe("basic", () => {
     // Create a server - which is supposed to run in Node
     server = new Server();
     await server.start();
-    expect(server.url).to.equal("ws://0.0.0.0:8090");
+    expect(server.url).to.oneOf([
+      "ws://localhost:8090",
+      "ws://[::1]:8090"
+    ]);
   });
 
   it("connects", async () => {

@@ -71,7 +71,7 @@ export interface ServerConfig {
 export class Server extends ServerEventEmitter {
   public static DEFAULT_CONFIG: ServerConfig = {
     autoStart: false,
-    host: "0.0.0.0",
+    host: "localhost",
     id: "default",
     port: 8090,
     autoRun: false,
@@ -272,8 +272,12 @@ export class Server extends ServerEventEmitter {
 
   public get url(): string {
     if (this.wss) {
-      const { address, port } = this.wss.address() as WebSocket.AddressInfo;
-      return `ws://${address}:${port}`;
+      const { address, port, family } = this.wss.address() as WebSocket.AddressInfo;
+      if (family === "IPv6") {
+        return `ws://[${address}]:${port}`;
+      } else {
+        return `ws://${address}:${port}`;
+      }
     } else {
       throw new Error("Cannot get url of a server that is not listening");
     }
@@ -339,7 +343,7 @@ export class Server extends ServerEventEmitter {
       if (typeof msg.action !== "string") {
         throw new Error("Expected message to have an action property");
       }
-      
+
       this.debug(`Received a '${msg.action}' message: %o`, msg);
       if (msg.action === "event") {
         if (this.runner) {
