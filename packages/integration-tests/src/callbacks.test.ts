@@ -22,35 +22,42 @@ describe("callbacks", () => {
 
     it("calls the callbacks and completes", async () => {
       // Create a server with the a muted reporter
+      server = new Server({ reporter: "base" });
+
       const serverStart = new Promise(resolve => {
-        server = new Server({
-          reporter: "base",
-          autoStart: true,
-        }).on("started", resolve);
+        server.on("started", resolve);
       });
 
-      // Create a promise that resolves when tests finishes
-      const clientRunning = new Promise(resolve => {
-        // Create a client - which is supposed to run where the tests are running
-        client = new Client({
-          tests: () => {
-            // Bust the cache if any
-            delete require.cache[sampleTestPath];
-            // Add the test file
-            require(sampleTestPath);
-          },
-        });
-        client.once("end", resolve);
+      const serverEnd = new Promise<void>(resolve => {
+        server.on("end", resolve);
       });
 
-      const serverCompleted = new Promise<void>(resolve => {
+      await server.start();
+
+      const serverRunCallback = new Promise<void>(resolve => {
         server.run(failures => {
           expect(failures).to.equal(1);
           resolve();
         });
       });
+      
+      // Create a client - which is supposed to run where the tests are running
+      client = new Client({
+        autoConnect: true,
+        tests: () => {
+          // Bust the cache if any
+          delete require.cache[sampleTestPath];
+          // Add the test file
+          require(sampleTestPath);
+        },
+      });
 
-      return Promise.all([serverStart, clientRunning, serverCompleted]);
+      // Create a promise that resolves when tests finishes
+      const clientRunning = new Promise(resolve => {
+        client.once("end", resolve);
+      });
+
+      await Promise.all([serverStart, clientRunning, serverEnd, serverRunCallback]);
     });
   });
 });
