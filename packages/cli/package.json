@@ -9,6 +9,13 @@
     "test": "mocha",
     "start": "ts-node src/index.ts"
   },
+  "nx": {
+    "targets": {
+      "test": {
+        "dependsOn": ["^build"]
+      }
+    }
+  },
   "bin": {
     "mocha-remote": "./bin/mocha-remote"
   },

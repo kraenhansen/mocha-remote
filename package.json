@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "lint": "eslint .",
-    "build": "nx build mocha-remote"
+    "build": "nx build mocha-remote",
+    "test": "nx run-many -t test"
   },
   "author": {
     "name": "Kræn Hansen",
