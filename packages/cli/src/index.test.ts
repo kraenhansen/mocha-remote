@@ -5,11 +5,13 @@ import { it } from "mocha";
 
 const cliPath = path.resolve(__dirname, "./index.ts");
 
+const longTimeout = process.env.CI ? 10_000 : 5_000;
+
 function cli(...args: string[]) {
   return cp.spawnSync(
     process.execPath,
     ["--require", "ts-node/register", cliPath, ...args],
-    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 5_000 },
+    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: longTimeout },
   );
 }
 
@@ -88,24 +90,24 @@ describe("Mocha Remote CLI", () => {
       const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "ts-node", "src/test/simple-client.ts");
       expect(output.stdout).contains("Totally expected");
       expect(output.status).equals(1);
-    });
+    }).timeout(longTimeout);
 
     it("exits on error when asked", () => {
       const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/throwing-client.ts");
       expect(output.stderr).contains("ERROR b00m!");
       expect(output.status).equals(1);
-    });
+    }).timeout(longTimeout);
 
     it("exits unclean if client dies early", () => {
       const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/exit-shield.ts", "100", "ts-node", "src/test/crashing-client.ts", "early");
       expect(output.stderr).contains("DISCONNECTION").contains("code = 1006");
       expect(output.status).equals(1);
-    });
+    }).timeout(longTimeout);
 
     it("exits unclean if client dies later", () => {
       const output = cli("--port", "0", "--exit-on-error", "--", "ts-node", "src/test/exit-shield.ts", "100", "ts-node", "src/test/crashing-client.ts", "later");
       expect(output.stderr).contains("DISCONNECTION").contains("code = 1006");
       expect(output.status).equals(1);
-    });
+    }).timeout(longTimeout);
   });
 });
