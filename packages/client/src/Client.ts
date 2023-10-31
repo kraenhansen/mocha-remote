@@ -155,6 +155,10 @@ export class Client extends ClientEventEmitter {
     this.debug("Constructing a client");
     this.config = {  ...Client.DEFAULT_CONFIG, ...config };
     this.suite = Client.createRootSuite(this.config.title);
+
+    this.on("error", (err) => {
+      this.send({ action: "error", message: err.message }, false);
+    });
     
     this.context(this.config.context);
     this.grep(this.config.grep);
