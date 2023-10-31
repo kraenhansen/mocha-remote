@@ -7,7 +7,7 @@ const [timeout, command, ...args] = process.argv.slice(2);
 const subProcess = cp.spawn(command, args, { stdio: "inherit" });
 subProcess.on("exit", (code, signal) => {
   // eslint-disable-next-line no-console
-  console.log(`Subprocess exitted (${code} / ${signal})`);
+  console.log(`Subprocess exited (${code} / ${signal})`);
 })
 
 process.on("exit", () => {
@@ -18,5 +18,5 @@ process.on("SIGINT", () => {
   subProcess.kill("SIGINT");
 });
 
-// Using a timeout to prevent process from exitting
+// Using a timeout to prevent process from exiting
 setTimeout(() => { /* tumbleweed */}, parseInt(timeout, 10));
