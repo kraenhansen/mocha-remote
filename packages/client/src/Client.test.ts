@@ -47,13 +47,14 @@ describe("Mocha Remote Client", () => {
     // We expect that no tests are loaded before running
     expect(client.suite.tests.length).equals(0);
 
-    const failures = await new Promise(resolve => {
-      const runner = client.run(resolve);
-      // We expect that all tests has been loaded now
-      expect(client.suite.tests.length).equals(3);
+    const failures = await new Promise(async resolve => {
+      const runner = await client.run(resolve);
       // The total number of tests should only include grepped
       expect(runner.total).equals(2);
     })
+
+    // We expect that all tests has been loaded now
+    expect(client.suite.tests.length).equals(3);
 
     expect(failures).equals(1);
     expect(ran).deep.equals(["a", "b"]);
@@ -132,24 +133,25 @@ describe("Mocha Remote Client", () => {
     // We expect that no tests are loaded before running
     expect(client.suite.tests.length).equals(0);
 
-    const failures1 = await new Promise(resolve => {
-      const runner = client.run(resolve);
-      // We expect that all tests has been loaded now
-      expect(client.suite.tests.length).equals(1);
+    const failures1 = await new Promise(async resolve => {
+      const runner = await client.run(resolve);
       expect(runner.total).equals(1);
     })
+    // We expect that all tests has been loaded now
+    expect(client.suite.tests.length).equals(1);
 
     expect(failures1).equals(1);
     expect(ran).deep.equals(["a"]);
 
     // One more time
 
-    const failures2 = await new Promise(resolve => {
-      const runner = client.run(resolve);
-      // We expect that all tests has been loaded now
-      expect(client.suite.tests.length).equals(1);
+    const failures2 = await new Promise(async resolve => {
+      const runner = await client.run(resolve);
       expect(runner.total).equals(1);
     })
+
+    // We expect that all tests has been loaded now
+    expect(client.suite.tests.length).equals(1);
 
     expect(failures2).equals(1);
     expect(ran).deep.equals(["a", "a"]);
@@ -164,7 +166,11 @@ describe("Mocha Remote Client", () => {
       wss = new ws.Server({ port: 0 });
       const address = wss.address();
       if (typeof address === "object") {
-        url = `ws://localhost:${address.port}`;
+        if (address.family === "IPv6") {
+          url = `ws://[${address.address}]:${address.port}`;
+        } else {
+          url = `ws://${address.address}:${address.port}`;
+        }
       }
     });
 
