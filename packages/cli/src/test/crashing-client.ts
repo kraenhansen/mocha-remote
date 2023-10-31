@@ -1,17 +1,16 @@
 import { Client } from "mocha-remote-client";
-import { causeSegfault } from "segfault-handler";
 
 const when = process.argv[process.argv.length - 1];
 
 new Client({
   tests: () => {
     if (when === "early") {
-      causeSegfault();
+      process.kill(process.pid, "SIGSEGV");
     }
 
     it("runs", () => {
       if (when === "later") {
-        causeSegfault();
+        process.kill(process.pid, "SIGSEGV");
       }
     });
   }
