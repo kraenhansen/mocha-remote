@@ -94,7 +94,6 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     }
     // Exit right away
     if (exitOnError) {
-      server.stop();
       process.exit(1);
     }
   });
