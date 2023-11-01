@@ -248,14 +248,24 @@ export class Server extends ServerEventEmitter {
   }
 
   public async runAndStop(context?: CustomContext): Promise<void> {
+    let handleError: undefined | ((err: Error) => void) = undefined;
     try {
       // Run the tests
       // TODO: Consider adding a timeout
-      const failures = await new Promise<number>(resolve => this.run(resolve, context));
+      const failures = await new Promise<number>((resolve, reject) => {
+        // Register an error handler and keep a reference to remove it later
+        handleError = reject;
+        this.on("error", handleError);
+        this.run(resolve, context);
+      });
       if (failures > 0) {
         throw new Error(`Tests completed with ${failures} failures`);
       }
     } finally {
+      // Stop handling errors
+      if (handleError) {
+        this.off("error", handleError);
+      }
       // Stop the server
       await this.stop();
     }
