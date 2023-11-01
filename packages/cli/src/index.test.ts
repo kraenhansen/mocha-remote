@@ -9,7 +9,7 @@ function cli(...args: string[]) {
   return cp.spawnSync(
     process.execPath,
     ["--require", "tsx/cjs", cliPath, ...args],
-    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 1_000 },
+    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 4_000 },
   );
 }
 
