@@ -7,4 +7,5 @@ new Client({
 }).on("error", err => {
   // eslint-disable-next-line no-console
   console.log(`An error occurred: ${err.message}`);
+  process.exit();
 });
