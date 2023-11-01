@@ -32,7 +32,7 @@
     "extension": [
       "ts"
     ],
-    "spec": "src/**/*.test.ts",
-    "require": "ts-node/register"
+    "require": "tsx",
+    "spec": "src/**/*.test.ts"
   }
 }

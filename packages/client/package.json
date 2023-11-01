@@ -60,8 +60,8 @@
     "extension": [
       "ts"
     ],
+    "require": "tsx",
     "spec": "src/**/*.test.ts",
-    "require": "ts-node/register",
     "file": "src/node/index.ts"
   }
 }
