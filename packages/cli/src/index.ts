@@ -142,6 +142,7 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     });
     
     process.on("exit", () => {
+      console.log("Sending SIGKILL to command process");
       commandProcess.kill("SIGKILL");
     });
   }
