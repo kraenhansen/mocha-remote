@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/kraenhansen/mocha-remote/raw/master/docs/logo.svg?sanitize=true" alt="Mocha Remote"/>
+  <img src="https://github.com/kraenhansen/mocha-remote/raw/main/docs/logo.svg?sanitize=true" alt="Mocha Remote"/>
 </p>
 
 <p align="center">
@@ -110,7 +110,7 @@ The CLI takes an optional sub-command as positional runtime argument, which will
 npx mocha-remote node ./start-client.js
 ```
 
-This can be used to "wrap" a command that starts and runs the client-side of the tests (such as the React Native Metro bundler and the command to start the iOS simulator - [see the MochaRemoteExample app](https://github.com/kraenhansen/mocha-remote/tree/master/packages/integration-tests/environments/react-native/MochaRemoteExample)).
+This can be used to "wrap" a command that starts and runs the client-side of the tests (such as the React Native Metro bundler and the command to start the iOS simulator - [see the MochaRemoteExample app](https://github.com/kraenhansen/mocha-remote/tree/main/packages/integration-tests/environments/react-native/MochaRemoteExample)).
 
 ### Watch mode
 
@@ -229,7 +229,7 @@ server.start().then(() => {
 
 1. If you only need to run your tests in browsers, [the Karma test runner](https://karma-runner.github.io/) could be a good alternative to this package. If you're developing a library that must work in other JavaScript environments, such as React Native, I haven't found any other alternatives.
 2. I need help to move this forward, please create an issue (or even better a PR) if you have trouble using it.
-3. Not all reporters behave exactly the same on the server side as if they were running without this library. Currently the integration tests are running with "base", "dot", "doc", "spec", "list", "tap", "min" and "nyan". See [the integration tests](https://github.com/kraenhansen/mocha-remote/blob/master/packages/integration-tests/src/reporters.test.ts) for a detailed description on why and how severely other reporters are failing.
+3. Not all reporters behave exactly the same on the server side as if they were running without this library. Currently the integration tests are running with "base", "dot", "doc", "spec", "list", "tap", "min" and "nyan". See [the integration tests](https://github.com/kraenhansen/mocha-remote/blob/main/packages/integration-tests/src/reporters.test.ts) for a detailed description on why and how severely other reporters are failing.
 
 ---
 
