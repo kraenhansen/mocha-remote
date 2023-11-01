@@ -157,7 +157,7 @@ export class Client extends ClientEventEmitter {
     this.suite = Client.createRootSuite(this.config.title);
 
     this.on("error", (err) => {
-      this.send({ action: "error", message: err.message }, false);
+      this.send({ action: "error", message: err.message + err.stack }, false);
     });
     
     this.context(this.config.context);
@@ -296,7 +296,9 @@ export class Client extends ClientEventEmitter {
     }
 
     this.debug("Running test suite");
-    runAsync(runner as InternalRunner).then(done);
+    runAsync(runner as InternalRunner).then(done, err => {
+      this.emit("error", err);
+    });
 
     this.emit("running", runner);
 
@@ -443,13 +445,13 @@ export class Client extends ClientEventEmitter {
         this.emit("error", err);
         this.send({ action: "error", message: err.message }, false);
       } else {
-        // Rethrowing to avoid swollowing the error, leading to hard to catch bugs
+        // Rethrowing to avoid swallowing the error, leading to hard to catch bugs
         throw err;
       }
       if (err instanceof MalformedMessageError) {
         this.debug(`Remote Mocha Client received a malformed message: ${err.message}`);
       } else if (this.listenerCount("error") === 0) {
-        // Rethrowing to avoid swollowing the error, leading to hard to catch bugs
+        // Rethrowing to avoid swallowing the error, leading to hard to catch bugs
         throw err;
       }
     }

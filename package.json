@@ -1,9 +1,10 @@
 {
-  "name": "mocha-remote",
+  "name": "mocha-remote-root",
   "private": true,
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "lint": "eslint .",

@@ -69,7 +69,7 @@ module.exports = [
     plugins: [
       new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
-        process: 'process',
+        process: path.resolve('./src/mocked-process.js'),
       }),
     ]
   })
