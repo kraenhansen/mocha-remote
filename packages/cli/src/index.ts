@@ -14,6 +14,22 @@ import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "
 type KeyValues = { [key: string]: string | true };
 type Logger = (...args: unknown[]) => void;
 
+function isNumeric(value: string) {
+  return /^-?\d+$/.test(value);
+}
+
+function coerceValue(value: string): string | number | boolean {
+  if (value.toLowerCase() === "false") {
+    return false;
+  } else if (value.toLowerCase() === "true") {
+    return true;
+  } else if (isNumeric(value)) {
+    return parseFloat(value);
+  } else {
+    return value;
+  }
+}
+
 function parseKeyValues(opts: string[]): KeyValues {
   // Split on , since element might contain multiple key,value pairs
   // Flat because the parameter might be included multiple times
@@ -21,7 +37,7 @@ function parseKeyValues(opts: string[]): KeyValues {
   const splitPairs = pairs.map(pair => {
     const [key, value] = pair.split("=");
     if (typeof value === "string" && value.length > 0) {
-      return [key, value];
+      return [key, coerceValue(value)];
     } else {
       return [key, true];
     }
