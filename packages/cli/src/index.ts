@@ -142,7 +142,7 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     });
     
     process.on("exit", () => {
-      commandProcess.kill();
+      commandProcess.kill("SIGKILL");
     });
   }
 }
