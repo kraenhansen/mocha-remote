@@ -43,12 +43,31 @@ describe("Mocha Remote CLI", () => {
     expect(MOCHA_REMOTE_ID).equals("default");
   });
 
-  it("propagates context to client", () => {
-    // Supports multiple --context / -c runtime flags and multiple pairs in each
-    // Using --silent to parse output of the command in isolation
-    const output = cli("--port", "0", "--silent", "--context", "k1=v1,k2=v2", "-c", "k3=v3,truthy", "--", "tsx", "src/test/context-logging-client.ts");
-    const jsonOuput = parseJsonOutput(output.stdout);
-    expect(jsonOuput).deep.equals({ k1: "v1", k2: "v2", k3: "v3", truthy: true });
+  describe("context", () => {
+
+    it("propagates to client", () => {
+      // Supports multiple --context / -c runtime flags and multiple pairs in each
+      // Using --silent to parse output of the command in isolation
+      const output = cli("--port", "0", "--silent", "--context", "k1=v1,k2=v2", "-c", "k3=v3,truthy", "--", "tsx", "src/test/context-logging-client.ts");
+      const jsonOuput = parseJsonOutput(output.stdout);
+      expect(jsonOuput).deep.equals({ k1: "v1", k2: "v2", k3: "v3", truthy: true });
+    });
+
+    it("coerce numbers", () => {
+      // Supports multiple --context / -c runtime flags and multiple pairs in each
+      // Using --silent to parse output of the command in isolation
+      const output = cli("--port", "0", "--silent", "--context", "a=123,b=-123", "--", "tsx", "src/test/context-logging-client.ts");
+      const jsonOuput = parseJsonOutput(output.stdout);
+      expect(jsonOuput).deep.equals({ a: 123, b: -123 });
+    });
+
+    it("coerce booleans", () => {
+      // Supports multiple --context / -c runtime flags and multiple pairs in each
+      // Using --silent to parse output of the command in isolation
+      const output = cli("--port", "0", "--silent", "--context", "key1=true,key2=false", "--", "tsx", "src/test/context-logging-client.ts");
+      const jsonOuput = parseJsonOutput(output.stdout);
+      expect(jsonOuput).deep.equals({ key1: true, key2: false });
+    });
   });
 
   it("prints when client connects", () => {
