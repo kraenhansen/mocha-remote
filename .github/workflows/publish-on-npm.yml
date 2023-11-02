@@ -3,6 +3,7 @@ name: Publish on NPM
 on:
   release:
     types: [created]
+    branches: [main]
 
 jobs:
   test:
