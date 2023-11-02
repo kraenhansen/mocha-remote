@@ -157,7 +157,7 @@ export class Client extends ClientEventEmitter {
     this.suite = Client.createRootSuite(this.config.title);
 
     this.on("error", (err) => {
-      this.send({ action: "error", message: err.message + err.stack }, false);
+      this.send({ action: "error", message: err.message }, false);
     });
     
     this.context(this.config.context);
