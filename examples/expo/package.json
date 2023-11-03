@@ -14,7 +14,7 @@
   },
   "nx": {
     "targets": {
-      "test:*": {
+      "test:android": {
         "dependsOn": [
           "^build"
         ]
