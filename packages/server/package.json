@@ -36,10 +36,10 @@
     "mocha": "^10.2.0"
   },
   "mocha": {
+    "import": "tsx",
     "extension": [
       "ts"
     ],
-    "require": "tsx",
     "spec": "src/**/*.test.ts"
   }
 }

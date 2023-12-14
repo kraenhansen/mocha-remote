@@ -59,10 +59,10 @@
     ]
   },
   "mocha": {
+    "import": "tsx",
     "extension": [
       "ts"
     ],
-    "require": "tsx",
     "spec": "src/**/*.test.ts",
     "slow": 3000,
     "timeout": 5000

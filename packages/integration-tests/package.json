@@ -29,10 +29,10 @@
     "mocha-remote-server": "1.7.0"
   },
   "mocha": {
+    "import": "tsx",
     "extension": [
       "ts"
     ],
-    "require": "tsx",
     "spec": "src/**/*.test.ts"
   }
 }

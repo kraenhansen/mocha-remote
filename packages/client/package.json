@@ -57,10 +57,10 @@
     ]
   },
   "mocha": {
+    "import": "tsx",
     "extension": [
       "ts"
     ],
-    "require": "tsx",
     "spec": "src/**/*.test.ts",
     "file": "src/node/index.ts"
   }
