@@ -61,16 +61,12 @@ describe("reporters", () => {
       let mocha: Mocha;
 
       beforeEach(async () => {
-        // Save the current global to continue the script
-        const globalBefore = Object.assign({}, global);
         // Initialize the clintside test
         mocha = new Mocha({ fullStackTrace: true });
         // Bust the cache if any
         delete require.cache[sampleTestPath];
         // Add the test file
         mocha.addFile(sampleTestPath);
-        // Restore the global
-        Object.assign(global, globalBefore);
       });
 
       // Disabling the output buffering, in case the test failed and never did this itself
