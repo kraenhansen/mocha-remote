@@ -287,6 +287,11 @@ export class Client extends ClientEventEmitter {
       }
     };
 
+    // Abort the runner when disconnected
+    this.once("disconnection", () => {
+      runner.abort();
+    });
+
     // Setup listeners for all events emitted by the runner
     for (const name in Runner.constants) {
       if (name.startsWith("EVENT")) {
