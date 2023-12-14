@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-mocha",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "private": true,
   "description": "An internal simplified version of Mocha to be used from a client",
   "scripts": {
