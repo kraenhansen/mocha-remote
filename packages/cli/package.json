@@ -29,7 +29,11 @@
   "keywords": [
     "mocha"
   ],
-  "repository": "github:kraenhansen/mocha-remote",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kraenhansen/mocha-remote.git",
+    "directory": "packages/cli"
+  },
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
