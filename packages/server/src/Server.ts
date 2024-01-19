@@ -22,7 +22,7 @@ export type ReporterOptions = { [key: string]: string | boolean };
 function createPromiseHandle() {
   let resolve: () => void = () => {
     throw new Error(
-      "Expected new Promise callback to be called synchronisously"
+      "Expected new Promise callback to be called synchronously"
     );
   };
   const promise = new Promise<void>(r => (resolve = r));
@@ -42,7 +42,7 @@ export class ClientError extends Error {
 }
 
 export interface ServerConfig {
-  /** Network hostname to use when istening for clients */
+  /** Network hostname to use when listening for clients */
   host: string;
   /** Network port to use when listening for clients */
   port: number;
@@ -56,6 +56,8 @@ export interface ServerConfig {
   reporter: Mocha.ReporterConstructor | string;
   /** Reporter-specific options */
   reporterOptions: ReporterOptions;
+  /** ReporterOptions was previously the only way to specify options to reporter  */
+  reporterOption?: ReporterOptions;
   /** Only run tests matching this string or regexp */
   grep: string | undefined;
   /** Inverts grep matches */
@@ -210,8 +212,10 @@ export class Server extends ServerEventEmitter {
     // When constructing the Reporter we need to (unintuitively) pass all options, not the `options.reporterOptions`
     const reporter = new Reporter(this.runner as Mocha.Runner, {
       // alias option name is used in public reporters xunit/tap/progress
-      reporterOptions: this.config.reporterOptions,
-    });
+      // https://github.com/mochajs/mocha/issues/4153
+      reporterOptions: this.config.reporterOptions ?? this.config.reporterOption,
+      reporterOption: this.config.reporterOption ?? this.config.reporterOptions,
+    } as { reporterOptions: ReporterOptions, reporterOption: ReporterOptions });
 
     const done = (failures: number) => {
       this.debug("Testing is done");
