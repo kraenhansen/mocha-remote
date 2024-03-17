@@ -16,9 +16,9 @@
     "url": "https://github.com/kraenhansen"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.3",
+    "@types/mocha": "^10.0.6",
     "buffer": "^6.0.3",
-    "mocha": "10.2.0",
+    "mocha": "10.3.0",
     "process": "^0.11.10",
     "util": "^0.12.4",
     "webpack": "^5.68.0",
