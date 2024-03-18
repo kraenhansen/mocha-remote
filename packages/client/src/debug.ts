@@ -1,4 +1,4 @@
-import { Debugger, debug } from "debug";
+import debug, { Debugger } from "debug";
 
 export type { Debugger };
 

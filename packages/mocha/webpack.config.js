@@ -2,21 +2,15 @@ const path = require('path');
 const webpack = require('webpack');
 const { merge } = require('webpack-merge');
 
-const mochaRootPath = path.resolve('../../node_modules/mocha');
-
 const common = {
   mode: 'production',
   entry: './src/index.js',
+  devtool: 'source-map',
   output: {
-    path: path.resolve('./dist'),
     library: { type: 'commonjs' }
   },
   resolve: {
     alias: {
-      // Providing a mocked version of cli.js
-      // @see https://github.com/mochajs/mocha/blob/v8.3.2/lib/utils.js#L676-L679
-      [path.resolve(mochaRootPath, 'lib/cli.js')]:
-        path.resolve('./src/mocked-cli.js'),
       // @see https://github.com/mochajs/mocha/blob/v8.3.2/lib/utils.js#L13
       "path": path.resolve('./src/mocked-path.js'),
     },
@@ -39,7 +33,10 @@ const common = {
 module.exports = [
   merge(common, {
     output: {
-      filename: 'mocha.node.bundle.js',
+      path: path.resolve('./dist/node'),
+      // This filename is important for it to be stripped from stacktraces
+      // @see https://github.com/mochajs/mocha/blob/a5b565289b40a839af086b13fb369e04e205ed4b/lib/utils.js#L452
+      filename: 'mocha.js',
     },
     resolve: {
       fallback: {
@@ -56,7 +53,10 @@ module.exports = [
   }),
   merge(common, {
     output: {
-      filename: 'mocha.browser.bundle.js',
+      path: path.resolve('./dist/browser'),
+      // This filename is important for it to be stripped from stacktraces
+      // @see https://github.com/mochajs/mocha/blob/a5b565289b40a839af086b13fb369e04e205ed4b/lib/utils.js#L452
+      filename: 'mocha.js',
     },
     resolve: {
       fallback: {

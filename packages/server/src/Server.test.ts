@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import WebSocket from "ws";
+import { WebSocket } from "ws";
 import flatted from "flatted";
 
 import { Server } from "./Server";
