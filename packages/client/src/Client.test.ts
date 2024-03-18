@@ -1,9 +1,8 @@
 import { expect } from 'chai';
-import * as ws from "ws";
+import { WebSocketServer } from "ws";
 import * as flatted from "flatted";
 
 import { Client } from './Client';
-import { rejects } from 'assert';
 
 const reconnectDelay = 50;
 
@@ -159,11 +158,11 @@ describe("Mocha Remote Client", () => {
 
 
   describe("connecting", () => {
-    let wss: ws.Server;
+    let wss: WebSocketServer;
     let url: string;
 
     beforeEach(() => {
-      wss = new ws.Server({ port: 0 });
+      wss = new WebSocketServer({ port: 0 });
       const address = wss.address();
       if (typeof address === "object") {
         if (address.family === "IPv6") {
@@ -183,7 +182,7 @@ describe("Mocha Remote Client", () => {
     });
 
     it("reconnects until server is up", async () => {
-      const { port } = wss.address() as ws.AddressInfo;
+      const { port } = wss.address() as WebSocket.AddressInfo;
       // Shut down the server before the client gets a chance to connect
       wss.close();
       // Start connecting
@@ -191,7 +190,7 @@ describe("Mocha Remote Client", () => {
       // Wait for a couple of attempts
       await new Promise(resolve => setTimeout(resolve, reconnectDelay * 2));
       // Start the server (using the same port as initially)
-      wss = new ws.Server({ port });
+      wss = new WebSocketServer({ port });
       await Promise.all([
         new Promise(resolve => client.once("connection", resolve)),
         new Promise(resolve => wss.once("connection", resolve)),

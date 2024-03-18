@@ -1,5 +1,5 @@
 import Mocha from "mocha";
-import WebSocket from "ws";
+import WebSocket, { WebSocketServer, AddressInfo } from "ws";
 import path from "path";
 import type http from "http";
 import flatted from "flatted";
@@ -93,7 +93,7 @@ export class Server extends ServerEventEmitter {
   public readonly config: ServerConfig;
 
   private readonly debug: Debugger;
-  private wss?: WebSocket.Server;
+  private wss?: WebSocketServer;
   private client?: WebSocket;
   private runner?: FakeRunner;
   private stoppedPromiseHandle = createPromiseHandle();
@@ -114,7 +114,7 @@ export class Server extends ServerEventEmitter {
   public start(): Promise<void> {
     this.debug(`Server is starting`);
     return new Promise<void>((resolve, reject) => {
-      this.wss = new WebSocket.Server({
+      this.wss = new WebSocketServer({
         host: this.config.host,
         port: this.config.port
       });
@@ -273,7 +273,7 @@ export class Server extends ServerEventEmitter {
 
   public get port(): number {
     if (this.wss) {
-      const { port } = this.wss.address() as WebSocket.AddressInfo;
+      const { port } = this.wss.address() as AddressInfo;
       return port;
     } else {
       throw new Error("Cannot get port of a server that is not listening");
@@ -282,7 +282,7 @@ export class Server extends ServerEventEmitter {
 
   public get url(): string {
     if (this.wss) {
-      const { address, port, family } = this.wss.address() as WebSocket.AddressInfo;
+      const { address, port, family } = this.wss.address() as AddressInfo;
       if (family === "IPv6") {
         return `ws://[${address}]:${port}`;
       } else {

@@ -4,13 +4,6 @@
     "declaration": true,
     "sourceMap": true,
     "outDir": "./dist",
-    
-    "typeRoots": [
-      "./types",
-      "../../types",
-      "./node_modules/@types",
-      "../../node_modules/@types"
-    ],
     "types": [
       "debug",
       "mocha",

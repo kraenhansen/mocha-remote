@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "exclude": [
+    "src/browser/",
+    "src/node/",
+    "src/**/*.test.ts"
+  ]
+}
