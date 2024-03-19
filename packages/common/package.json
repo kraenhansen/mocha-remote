@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-common",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "All common code and types shared between the Mocha Remote server and client",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

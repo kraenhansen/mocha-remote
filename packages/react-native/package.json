@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-react-native",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "React Native components providing a UI for the Mocha Remote Client",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "mocha-remote-client": "1.9.0"
+    "mocha-remote-client": "1.10.0"
   },
   "peerDependencies": {
     "react-native": "*",
