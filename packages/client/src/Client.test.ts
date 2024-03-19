@@ -108,7 +108,15 @@ describe("Mocha Remote Client", () => {
       autoConnect: false,
       context,
       tests: actualContext => {
-        expect(actualContext).deep.equals({ ...context, ...updates });
+        const expectedContext = { ...context, ...updates };
+        expect(actualContext).deep.equals(expectedContext);
+
+        it("passes context through this", function(this: Mocha.Context) {
+          // Looping expected keys to avoid
+          for (const key of Object.keys(expectedContext)) {
+            expect(expectedContext[key]).equals(this[key]);
+          }
+        });
       }
     });
 
