@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { WebSocketServer } from "ws";
+import { WebSocketServer, AddressInfo } from "ws";
 import * as flatted from "flatted";
 
 import { Client } from './Client';
@@ -46,11 +46,12 @@ describe("Mocha Remote Client", () => {
     // We expect that no tests are loaded before running
     expect(client.suite.tests.length).equals(0);
 
-    const failures = await new Promise(async resolve => {
-      const runner = await client.run(resolve);
-      // The total number of tests should only include grepped
-      expect(runner.total).equals(2);
-    })
+    const failures = await new Promise(resolve => {
+      client.run(resolve).then(runner => {
+        // The total number of tests should only include grepped
+        expect(runner.total).equals(2);
+      });
+    });
 
     // We expect that all tests has been loaded now
     expect(client.suite.tests.length).equals(3);
@@ -111,10 +112,16 @@ describe("Mocha Remote Client", () => {
       }
     });
 
-    await new Promise(resolve => client.run(resolve));
+    {
+      const failures = await new Promise<number>((resolve, reject) => client.run(resolve).catch(reject));
+      expect(failures).equals(0);
+    }
     // Increase the run count and run again, providing the updated value an update to the context when running
     updates.run = 1;
-    await new Promise(resolve => client.run(resolve, { context: { run: 1 } }));
+    {
+      const failures = await new Promise<number>((resolve, reject) => client.run(resolve, { context: { run: 1 } }).catch(reject));
+      expect(failures).equals(0);
+    }
   });
 
   it("re-runs", async () => {
@@ -132,9 +139,10 @@ describe("Mocha Remote Client", () => {
     // We expect that no tests are loaded before running
     expect(client.suite.tests.length).equals(0);
 
-    const failures1 = await new Promise(async resolve => {
-      const runner = await client.run(resolve);
-      expect(runner.total).equals(1);
+    const failures1 = await new Promise(resolve => {
+      client.run(resolve).then(runner => {
+        expect(runner.total).equals(1);
+      });
     })
     // We expect that all tests has been loaded now
     expect(client.suite.tests.length).equals(1);
@@ -144,9 +152,10 @@ describe("Mocha Remote Client", () => {
 
     // One more time
 
-    const failures2 = await new Promise(async resolve => {
-      const runner = await client.run(resolve);
-      expect(runner.total).equals(1);
+    const failures2 = await new Promise(resolve => {
+      client.run(resolve).then(runner => {
+        expect(runner.total).equals(1);
+      });
     })
 
     // We expect that all tests has been loaded now
@@ -182,7 +191,7 @@ describe("Mocha Remote Client", () => {
     });
 
     it("reconnects until server is up", async () => {
-      const { port } = wss.address() as WebSocket.AddressInfo;
+      const { port } = wss.address() as AddressInfo;
       // Shut down the server before the client gets a chance to connect
       wss.close();
       // Start connecting
@@ -295,7 +304,7 @@ describe("Mocha Remote Client", () => {
           }));
 
           ws.on("message", data => {
-            const msg = flatted.parse(data as string);
+            const msg = flatted.parse(data.toString());
             expect(msg.action).equals("error");
             expect(msg.message).equals("b00m!");
             resolve();
