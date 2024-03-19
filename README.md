@@ -11,9 +11,7 @@
 I wanted to run a single Mocha test suite across multiple environments (Node.js, Electron and React-Native) with ideally no changes to the test suite.
 I found running the tests inside an Electron or a React-Native app, was difficult - it was hard to control it, start / stop external services and get reporting on which tests pass or fail.
 
-## Please Note: This is very early-stage
-
-I would appreciate a shout-out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you actually start using this or have suggestions on how to improve the library and its interface.
+I would appreciate a shout-out on Twitter [@kraenhansen](https://twitter.com/kraenhansen) if you're actually using this or have suggestions on how to improve the library and its interface.
 
 ## Installing the client
 
