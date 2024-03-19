@@ -1,14 +1,14 @@
 import cp from "child_process";
-import path from "path";
 import { expect } from "chai";
 import { it } from "mocha";
+import { URL } from "url";
 
-const cliPath = path.resolve(__dirname, "./index.ts");
+const cliPath = new URL("./cli.ts", import.meta.url).pathname;
 
 function cli(...args: string[]) {
   return cp.spawnSync(
     process.execPath,
-    ["--require", "tsx/cjs", cliPath, ...args],
+    ["--import", "tsx", cliPath, ...args],
     { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 4_000 },
   );
 }
@@ -111,8 +111,8 @@ describe("Mocha Remote CLI", () => {
 
     it("exits on error when asked", () => {
       const output = cli("--port", "0", "--exit-on-error", "--", "tsx", "src/test/throwing-client.ts");
-      //expect(output.stderr).contains("ERROR b00m!");
-      //expect(output.status).equals(1);
+      expect(output.stderr).contains("ERROR b00m!");
+      expect(output.status).equals(1);
     });
 
     it("exits unclean if client dies early", () => {

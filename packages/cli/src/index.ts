@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
-import yargs from "yargs/yargs";
-import { hideBin } from "yargs/helpers";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import cp from "child_process";
 import chalk from "chalk";
 import { inspect } from "util";
 
-const packageJsonPath = path.join(__dirname, "..", "package.json");
+const packageJsonPath = new URL("../package.json", import.meta.url);
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
 import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "mocha-remote-server";
@@ -254,7 +254,7 @@ export function run(args = hideBin(process.argv)): void {
       alias: 'e',
       default: process.env.MOCHA_REMOTE_EXIT_ON_ERROR === "true",
     })
-    .command('$0 [command...]', 'Start the Mocha Remote Server', ({ argv }) => {
+    .command('$0 [command...]', 'Start the Mocha Remote Server', () => {}, (argv) => {
       function log(...args: unknown[]) {
         if (!argv.silent) {
           /* eslint-disable-next-line no-console */
@@ -262,7 +262,8 @@ export function run(args = hideBin(process.argv)): void {
         }
       }
 
-      const logo = chalk.dim(fs.readFileSync(path.resolve(__dirname, '../logo.txt')));
+      const logoUrl = new URL('../logo.txt', import.meta.url);
+      const logo = chalk.dim(fs.readFileSync(logoUrl));
       log(logo);
 
       log(chalk.dim("reporter:"), argv.reporter);
@@ -320,8 +321,4 @@ export function run(args = hideBin(process.argv)): void {
     .help(true)
     .alias('h', 'help')
     .argv
-}
-
-if (module.parent === null) {
-  run();
 }
