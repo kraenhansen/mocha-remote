@@ -1,0 +1,21 @@
+{
+  "name": "mocha-remote-react-native",
+  "version": "1.8.0",
+  "description": "React Native components providing a UI for the Mocha Remote Client",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "peerDependencies": {
+    "react-native": "*",
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@react-native/typescript-config": "^0.74.1"
+  }
+}

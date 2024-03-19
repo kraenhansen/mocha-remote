@@ -6,6 +6,11 @@ describe("A test suite", () => {
 
   it("can succeed", (done) => {
     // It might take some time to succeed
-    setTimeout(done, 1000);
+    setTimeout(done, 500);
+  });
+
+  it("can succeed twice", (done) => {
+    // It might take some time to succeed again
+    setTimeout(done, 500);
   });
 });
