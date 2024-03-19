@@ -6,3 +6,5 @@ export { serialization };
 
 export * from "./Client";
 export * from "./ClientEventEmitter";
+
+export type { CustomContext, MochaConfig } from "mocha-remote-common";

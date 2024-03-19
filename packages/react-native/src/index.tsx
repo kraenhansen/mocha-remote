@@ -1,9 +1,11 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
-import { StyleSheet, Text, View, Platform, TextProps, SafeAreaView } from 'react-native';
+import { Text, Platform, TextProps } from 'react-native';
 
-import { Client } from "mocha-remote-client";
+import { Client, CustomContext } from "mocha-remote-client";
 
-type Status =
+export type { CustomContext };
+
+export type Status =
   | {
     kind: "waiting";
   }
@@ -20,31 +22,38 @@ type Status =
     totalTests: number;
   }
 
-type MochaRemoteProviderProps = React.PropsWithChildren<{
+export type MochaRemoteProviderProps = React.PropsWithChildren<{
   title?: string;
-  tests: () => void;
+  tests: (context: CustomContext) => void;
 }>;
 
-type MochaRemoteContextValue = {
+export type MochaRemoteContextValue = {
   connected: boolean;
   status: Status;
+  context: CustomContext;
 };
 
-export const MochaRemoteContext = createContext<MochaRemoteContextValue>({ connected: false, status: { kind: "waiting" } });
+export const MochaRemoteContext = createContext<MochaRemoteContextValue>({
+  connected: false,
+  status: { kind: "waiting" },
+  context: {},
+});
 
 export function MochaRemoteProvider({ children, tests, title = `React Native on ${Platform.OS}` }: MochaRemoteProviderProps) {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "waiting" });
+  const [context, setContext] = useState<CustomContext>({});
   useEffect(() => {
     const client = new Client({
       title,
-      tests() {
+      tests(context) {
+        setContext(context);
         // Adding an async hook before each test to allow the UI to update
-        beforeEach(() => {
+        beforeEach("async-pause", () => {
           return new Promise<void>((resolve) => setImmediate(resolve));
         });
         // Require in the tests
-        tests();
+        tests(context);
       },
     })
       .on("connection", () => {
@@ -86,10 +95,10 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
     return () => {
       client.disconnect();
     };
-  }, [setStatus]);
+  }, [setStatus, setContext]);
 
   return (
-    <MochaRemoteContext.Provider value={{status, connected}}>
+    <MochaRemoteContext.Provider value={{status, connected, context}}>
       {children}
     </MochaRemoteContext.Provider>
   );
