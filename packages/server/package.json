@@ -9,6 +9,9 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "author": {
     "name": "Kræn Hansen",
     "email": "mail@kraenhansen.dk",

@@ -12,6 +12,9 @@
   "module": "dist/node.bundle.mjs",
   "browser": "dist/browser.bundle.mjs",
   "types": "dist/bundle.d.ts",
+  "files": [
+    "dist"
+  ],
   "author": {
     "name": "Kræn Hansen",
     "email": "mail@kraenhansen.dk",
