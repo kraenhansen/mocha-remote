@@ -234,6 +234,8 @@ export class Client extends ClientEventEmitter {
     // Building a fake file path to emit some path via events
     const fakeFilePath = "/mocha-remote-client/mocked-test-suite.js";
     this.suite.emit(EVENT_FILE_PRE_REQUIRE, global, fakeFilePath, mocha);
+    // Assing in the context to make it available in hooks
+    Object.assign(this.suite.ctx, context);
     // We're treating the value returned from the `result` as the `module.exports` from a file.
     const result = await this.config.tests(context);
     this.suite.emit(EVENT_FILE_REQUIRE, result, fakeFilePath, mocha);

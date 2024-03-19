@@ -13,4 +13,10 @@ describe("A test suite", () => {
     // It might take some time to succeed again
     setTimeout(done, 500);
   });
+
+  it("can fail if the context needs it to", function() {
+    if (this.shouldThrow) {
+      throw new Error("Expected error!");
+    }
+  });
 });

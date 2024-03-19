@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "lint": "eslint .",
-    "build": "nx build mocha-remote",
+    "build": "nx run-many -t build",
     "test": "nx run-many -t test"
   },
   "author": {
