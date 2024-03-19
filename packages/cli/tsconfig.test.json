@@ -1,9 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "mocha", "chai"],
+  },
   "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
     "src/**/*.test.ts",
     "src/test/"
   ]
