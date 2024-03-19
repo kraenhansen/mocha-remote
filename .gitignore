@@ -30,3 +30,6 @@ node_modules/
 
 # NX cache
 .nx
+
+# Rollup cache
+.rollup.cache
