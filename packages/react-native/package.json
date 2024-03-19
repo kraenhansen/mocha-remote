@@ -11,6 +11,9 @@
   "scripts": {
     "build": "tsc"
   },
+  "dependencies": {
+    "mocha-remote-client": "1.9.0"
+  },
   "peerDependencies": {
     "react-native": "*",
     "react": "^18"
