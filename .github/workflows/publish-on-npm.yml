@@ -25,6 +25,7 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npx nx release publish -d
+      - run: npm run build
+      - run: npx nx release publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
