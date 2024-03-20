@@ -83,7 +83,13 @@ export type ClientConfig = {
    * @default "bdd"
    */
   ui: InterfaceConfig;
-  /** A funcion called to load tests */
+  /**
+   * Called when a test fails error occurs to allow transformations of the stacktrace
+   */
+  transformFailure?: (test: Mocha.Test, error: Error) => Promise<Error>;
+  /**
+   * A funcion called to load tests
+   */
   tests(context: CustomContext): void | Promise<void>,
 } & MochaConfig;
 
@@ -295,11 +301,30 @@ export class Client extends ClientEventEmitter {
     });
 
     // Setup listeners for all events emitted by the runner
-    for (const name in Runner.constants) {
-      if (name.startsWith("EVENT")) {
-        const eventName = Runner.constants[name as keyof typeof Runner.constants];
-        runner.on(eventName, this.sendEvent.bind(this, eventName));
-      }
+    const mappedEventKeys = Object.keys(Runner.constants).filter(k => k.startsWith("EVENT")) as (keyof typeof Runner.constants)[];
+    const mappedEventNames = new Set(mappedEventKeys.map(k => Runner.constants[k]));
+
+    const { transformFailure } = this.config;
+    if (transformFailure) {
+      // Don't automatically map the "fail" event
+      mappedEventNames.delete(Runner.constants.EVENT_TEST_FAIL);
+      // Register a listener which allows the user to transform the failure
+      runner.on(Runner.constants.EVENT_TEST_FAIL, (test, error) => {
+        this.queueEvent(Runner.constants.EVENT_TEST_FAIL, 
+          transformFailure(test, error).then((transformedError) => {
+            return [test, transformedError];
+          }, cause => {
+            const err = new Error(`Failed to transform failure: ${cause.message}`, { cause });
+            return [test, err];
+          })
+        );
+      });
+    }
+
+    for (const eventName of mappedEventNames) {
+      runner.on(eventName, (...args) => {
+        this.queueEvent(eventName, args);
+      });
     }
 
     this.debug("Running test suite");
@@ -312,8 +337,10 @@ export class Client extends ClientEventEmitter {
     runner.once(Runner.constants.EVENT_RUN_END, () => {
       this.emit("end", runner.failures);
       if (this.config.autoDisconnect) {
-        this.debug("Disconnecting automatically after ended run");
-        this.disconnect();
+        this.debug("Disconnecting automatically after ended run and pending events");
+        this.pendingEvent.then(() => {
+          this.disconnect();
+        });
       }
     });
 
@@ -476,6 +503,18 @@ export class Client extends ClientEventEmitter {
     } else if (throwOnClosed) {
       throw new SendMessageFailure(msg, "WebSocket is closed");
     }
+  }
+
+  private pendingEvent: Promise<void> = Promise.resolve();
+
+  /**
+   * Queue an event to be sent, use this to prevent out of order delivery
+   */
+  private queueEvent(name: string, promisedArgs: Promise<unknown[]> | unknown[]) {
+    this.pendingEvent = this.pendingEvent.then(async () => {
+      const args = await promisedArgs;
+      this.sendEvent(name, ...args);
+    });
   }
 
   private sendEvent(name: string, ...args: unknown[]) {
