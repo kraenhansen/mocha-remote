@@ -48,7 +48,7 @@ By default, the client automatically (re)connects to the server and disconnects 
 Install the Mocha Remote CLI into your project.
 
 ```shell
-npm install mocha@^8 mocha-remote-cli --save-dev
+npm install mocha-remote-cli --save-dev
 ```
 
 To start the server, simply run the Mocha Remote CLI from your terminal
@@ -105,7 +105,7 @@ The default behavior of the CLI is to listen for a client connecting, ask the cl
 The CLI takes an optional sub-command as positional runtime argument, which will be spawned when the server has started and killed when the CLI exits. Additionally, the server will kill itself if the sub-command exits.
 
 ```shell
-npx mocha-remote node ./start-client.js
+npx mocha-remote -- node ./start-client.js
 ```
 
 This can be used to "wrap" a command that starts and runs the client-side of the tests (such as the React Native Metro bundler and the command to start the iOS simulator - [see the MochaRemoteExample app](https://github.com/kraenhansen/mocha-remote/tree/main/packages/integration-tests/environments/react-native/MochaRemoteExample)).
@@ -188,6 +188,12 @@ Run with environment variable `MOCHA_REMOTE_REPORTER=min` to provide a default r
 ### Exit on error
 
 If an error occurs client-side, while loading tests, you might want to ensure your CI job fails instead of simply reporting "0 passing". To get this behavior, run with `--exit-on-error` (or `MOCHA_REMOTE_EXIT_ON_ERROR=true`).
+
+## For React Native apps
+
+The `mocha-remote-react-native` package implements React Native components which wraps the `Client` from `mocha-remote-client`:
+
+https://github.com/kraenhansen/mocha-remote/blob/38dbf3b49072b44f35d99f339def45c4e7465eec/examples/expo/App.tsx#L1-L49
 
 ## Alternatively: Installing the server (for a programatic API)
 
