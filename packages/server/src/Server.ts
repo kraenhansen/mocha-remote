@@ -143,6 +143,11 @@ export class Server extends ServerEventEmitter {
     this.debug("Server is stopping");
     await new Promise<void>((resolve, reject) => {
       if (this.wss) {
+        // Terminate all clients
+        for (const ws of this.wss.clients) {
+          ws.close(1000, "Server stopping");
+        }
+        // Close the server
         this.wss.close(err => {
           // Forget about the server
           delete this.wss;
@@ -153,10 +158,6 @@ export class Server extends ServerEventEmitter {
             resolve();
           }
         });
-        // Terminate all clients
-        for (const ws of this.wss.clients) {
-          ws.terminate();
-        }
       } else {
         resolve();
       }
