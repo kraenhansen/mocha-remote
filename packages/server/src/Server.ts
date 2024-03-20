@@ -101,6 +101,7 @@ export class Server extends ServerEventEmitter {
   private stoppedPromiseHandle = createPromiseHandle();
   /** The options to send to the next connecting running client */
   private clientOptions?: MochaConfig = {};
+  private _listening = false;
 
   constructor(
     config: Partial<ServerConfig> = {},
@@ -113,9 +114,9 @@ export class Server extends ServerEventEmitter {
     this.stopped = this.stoppedPromiseHandle.promise;
   }
 
-  public start(): Promise<void> {
+  public async start(): Promise<void> {
     this.debug(`Server is starting`);
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       this.wss = new WebSocketServer({
         host: this.config.host,
         port: this.config.port
@@ -133,14 +134,14 @@ export class Server extends ServerEventEmitter {
         this.emit("error", err);
         reject(err);
       });
-    }).then(() => {
-      this.emit("started", this);
     });
+    this._listening = true;
+    this.emit("started", this);
   }
 
-  public stop(): Promise<void> {
+  public async stop(): Promise<void> {
     this.debug("Server is stopping");
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       if (this.wss) {
         this.wss.close(err => {
           // Forget about the server
@@ -159,11 +160,15 @@ export class Server extends ServerEventEmitter {
       } else {
         resolve();
       }
-    }).then(() => {
-      this.debug("Server was stopped");
-      // Resolve the stopped promise
-      this.stoppedPromiseHandle.resolve();
     });
+    this.debug("Server was stopped");
+    // Resolve the stopped promise
+    this._listening = false;
+    this.stoppedPromiseHandle.resolve();
+  }
+
+  public get listening() {
+    return this._listening;
   }
 
   public run(fn: (failures: number) => void, context?: CustomContext): Mocha.Runner {
@@ -310,8 +315,8 @@ export class Server extends ServerEventEmitter {
     this.debug("Client connected");
     // Check that the protocol matches
     const expectedProtocol = `mocha-remote-${this.config.id}`;
-    ws.on("close", (code: number, reason: string) => {
-      this.emit("disconnection", ws, code, reason);
+    ws.on("close", (code, reason) => {
+      this.emit("disconnection", ws, code, reason.toString());
     });
     // Signal that a client has connected
     this.emit("connection", ws, req);

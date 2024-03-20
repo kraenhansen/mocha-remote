@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import cp from "child_process";
@@ -11,8 +10,21 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
 import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "mocha-remote-server";
 
+export type Logger = (...args: unknown[]) => void;
+
+export type CleanupTask = () => (void | Promise<void>);
+const cleanupTasks: CleanupTask[] = [];
+
+async function cleanup() {
+  // Move the tasks into a local variable to avoid rerunning these on multiple invokations
+  const tasks = cleanupTasks.splice(0, cleanupTasks.length);
+  await Promise.all(tasks.map(task => task())).catch(err => {
+    // eslint-disable-next-line no-console
+    console.error(`Failed while cleaning up: ${err}`);
+  });
+}
+
 type KeyValues = { [key: string]: string | true };
-type Logger = (...args: unknown[]) => void;
 
 function isNumeric(value: string) {
   return /^-?\d+$/.test(value);
@@ -64,6 +76,13 @@ type ServerOptions = {
 
 // Start the server
 export async function startServer({ log, server, command, exitOnError }: ServerOptions): Promise<void> {
+  cleanupTasks.push(async () => {
+    if (server.listening) {
+      log("🧹 Stopping server");
+      await server.stop();
+    }
+  });
+
   server.on('started', server => {
     const url = server.url;
     log(
@@ -89,7 +108,10 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     print(displayClient(ws), color("DISCONNECTION"), `${msg} (code = ${code})`);
     if (code !== 1000 && exitOnError) {
       print(displayClient(ws), chalk.red("EXITTING"), "after an abnormal disconnect");
-      process.exit(1);
+      process.exitCode = 1;
+      cleanup().then(() => {
+        process.exit();
+      });
     }
   });
 
@@ -110,7 +132,8 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     }
     // Exit right away
     if (exitOnError) {
-      process.exit(1);
+      process.exitCode = 1;
+      cleanup();
     }
   });
 
@@ -135,22 +158,35 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
         MOCHA_REMOTE_ID: server.config.id,
       }
     });
+
+    const commandDescription = `${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`
+    
+    cleanupTasks.push(() => {
+      if (commandProcess.connected) {
+        log(`🧹 Terminating: ${commandDescription}`);
+        const success = commandProcess.kill();
+        if (!success) {
+          log(`💀 Sending SIGKILL to pid = ${commandProcess.pid}`);
+          commandProcess.kill("SIGKILL");
+        }
+      }
+    });
+
     /* eslint-disable-next-line no-console */
     log(
-      chalk.dim(`Running command: ${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`),
+      chalk.dim(`Running: ${commandDescription}`),
       '\n'
     );
 
     // We should exit when the command process exits - and vise versa
-    commandProcess.once("exit", (code, signal) => {
+    commandProcess.once("close", (code, signal) => {
       const cause = exitCause(code, signal);
       log('\n' + chalk.dim(`Command exited (${cause})`));
-      if (typeof code === "number") {
-        process.exit(code);
-      } else {
-        // This is unexpected
-        process.exit(1);
+      // Inherit exit code from sub-process if nothing has already sat it
+      if (typeof code === "number" && typeof process.exitCode !== "number") {
+        process.exitCode = code;
       }
+      cleanup();
     });
 
     process.on("SIGINT", () => {
@@ -158,7 +194,7 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     });
     
     process.on("exit", () => {
-      commandProcess.kill("SIGKILL");
+      cleanup();
     });
   }
 }
@@ -307,14 +343,14 @@ export function run(args = hideBin(process.argv)): void {
           if (!argv.watch) {
             // Run once and exit with the failures as exit code
             server.run(failures => {
-              process.exit(failures);
+              process.exitCode = failures;
             });
           }
         },
         err => {
           /* eslint-disable-next-line no-console */
           console.error(chalk.red("ERROR"), err.message);
-          process.exit(1);
+          process.exitCode = 1;
         }
       );
     })

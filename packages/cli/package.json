@@ -13,7 +13,7 @@
     "build": "tsc -p tsconfig.build.json",
     "prepack": "cp ../../README.md .",
     "test": "mocha",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/cli.ts"
   },
   "nx": {
     "targets": {
