@@ -1,5 +1,7 @@
 import React, { useEffect, useState, createContext, useContext } from "react";
 import { Text, Platform, TextProps } from 'react-native';
+import parseErrorStack, { StackFrame } from 'react-native/Libraries/Core/Devtools/parseErrorStack';
+import symbolicateStackTrace from 'react-native/Libraries/Core/Devtools/symbolicateStackTrace';
 
 import { Client, CustomContext } from "mocha-remote-client";
 
@@ -39,6 +41,17 @@ export const MochaRemoteContext = createContext<MochaRemoteContextValue>({
   context: {},
 });
 
+function isExternalFrame({ file }: StackFrame) {
+  return !file.includes("/mocha-remote/packages/client/dist/") && !file.includes("/mocha-remote-client/dist/")
+}
+
+function framesToStack(error: Error, frames: StackFrame[]) {
+  const lines = frames.filter(isExternalFrame).map(({ methodName, column, file, lineNumber }) => {
+    return `    at ${methodName} (${file}:${lineNumber}:${column})`
+  });
+  return `${error.name}: ${error.message}\n${lines.join("\n")}`;
+}
+
 export function MochaRemoteProvider({ children, tests, title = `React Native on ${Platform.OS}` }: MochaRemoteProviderProps) {
   const [connected, setConnected] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "waiting" });
@@ -46,14 +59,22 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
   useEffect(() => {
     const client = new Client({
       title,
+      async transformFailure(_, err) {
+        // TODO: Remove the two `as any` once https://github.com/facebook/react-native/pull/43566 gets released
+        const stack = parseErrorStack(err.stack as any);
+        const symbolicated = await symbolicateStackTrace(stack) as any;
+        err.stack = framesToStack(err, symbolicated.stack);
+        return err;
+      },
       tests(context) {
-        setContext(context);
         // Adding an async hook before each test to allow the UI to update
         beforeEach("async-pause", () => {
           return new Promise<void>((resolve) => setImmediate(resolve));
         });
         // Require in the tests
         tests(context);
+        // Make the context available to context consumers
+        setContext(context);
       },
     })
       .on("connection", () => {
@@ -98,7 +119,7 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
   }, [setStatus, setContext]);
 
   return (
-    <MochaRemoteContext.Provider value={{status, connected, context}}>
+    <MochaRemoteContext.Provider value={{ status, connected, context }}>
       {children}
     </MochaRemoteContext.Provider>
   );
@@ -125,7 +146,7 @@ function getStatusEmoji(status: Status) {
 }
 
 export function StatusEmoji(props: TextProps) {
-  const {status} = useMochaRemoteContext();
+  const { status } = useMochaRemoteContext();
   return <Text {...props}>{getStatusEmoji(status)}</Text>
 }
 
@@ -144,7 +165,7 @@ function getStatusMessage(status: Status) {
 }
 
 export function StatusText(props: TextProps) {
-  const {status} = useMochaRemoteContext();
+  const { status } = useMochaRemoteContext();
   return <Text {...props}>{getStatusMessage(status)}</Text>
 }
 
@@ -157,6 +178,6 @@ function getConnectionMessage(connected: boolean) {
 }
 
 export function ConnectionText(props: TextProps) {
-  const {connected} = useMochaRemoteContext();
+  const { connected } = useMochaRemoteContext();
   return <Text {...props}>{getConnectionMessage(connected)}</Text>
 }
