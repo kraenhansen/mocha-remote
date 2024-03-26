@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "@react-native/eslint-config": "0.74.75",
+    "@react-native/eslint-config": "0.74.76",
     "@types/react": "~18.2.45"
   },
   "eslintConfig": {
