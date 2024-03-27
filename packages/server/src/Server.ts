@@ -139,13 +139,13 @@ export class Server extends ServerEventEmitter {
     this.emit("started", this);
   }
 
-  public async stop(): Promise<void> {
+  public async stop(code = 1000, reason = "Server stopping"): Promise<void> {
     this.debug("Server is stopping");
     await new Promise<void>((resolve, reject) => {
       if (this.wss) {
         // Terminate all clients
         for (const ws of this.wss.clients) {
-          ws.close(1000, "Server stopping");
+          ws.close(code, reason);
         }
         // Close the server
         this.wss.close(err => {

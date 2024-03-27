@@ -73,8 +73,8 @@ describe("reconnecting client", () => {
       });
     });
 
-    // Stop the server
-    server.stop();
+    // Stop the server - in an unexpected way
+    server.stop(1011, "Encountered an unexpected condition");
     // Wait for client to start reconnecting
     await delay(reconnectDelay * 2.1);
     // Start the server
