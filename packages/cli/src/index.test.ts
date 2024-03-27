@@ -1,7 +1,12 @@
-import cp from "child_process";
+import cp from "node:child_process";
+import { URL } from "node:url";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import process from "node:process";
+
 import { expect } from "chai";
 import { it } from "mocha";
-import { URL } from "url";
 
 const cliPath = new URL("./cli.ts", import.meta.url).pathname;
 
@@ -100,6 +105,27 @@ describe("Mocha Remote CLI", () => {
     expect(output.stdout).contains("Running client #1");
     expect(output.stdout).contains("Running client #2");
     expect(output.status).equals(0);
+  });
+
+  it("exits clean and kills command", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
+    const outFile = path.join(tempDir, "out.txt");
+    expect(!fs.existsSync(outFile), "Expected the outfile to be missing");
+    const output = cli("--port", "0", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
+    expect(output.status).equals(0, "expected signal of the mocha-remote cli to remain a success");
+
+    // Checking the "exit" of the wrapped command
+    expect(fs.existsSync(outFile), "Expected the outfile to exist");
+    const { code, pid } = JSON.parse(fs.readFileSync(outFile, "utf8"));
+    expect(code).equals(143); // 143 is SIGTERM
+    expect(typeof pid).equals("number"); // 143 is SIGTERM
+    expect(() => {
+      // Use kill to assert the process has exited:
+      // > This method will throw an error if the target pid does not exist.
+      // > As a special case, a signal of 0 can be used to test for the existence of a process.
+      // see https://nodejs.org/api/process.html#processkillpid-signal
+      process.kill(pid, 0);
+    }).throws("kill ESRCH");
   });
 
   describe("failures", () => {
