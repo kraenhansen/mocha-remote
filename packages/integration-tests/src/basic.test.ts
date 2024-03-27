@@ -102,4 +102,29 @@ describe("basic", () => {
       });
     });
   });
+
+  it("expose the total number of tests on a Suite", async () => {
+    // Create a server - which is supposed to run in Node
+    server = new Server({ port: 0, autoRun: true });
+    await server.start();
+    // Create a client - which is supposed to run where the tests are running
+    client = new Client({
+      autoConnect: false,
+      url: server.url,
+      tests() {
+        it("tests one thing", () => {});
+        it("tests another thing", () => {});
+      }
+    });
+    
+    const totalCount = new Promise<number>(resolve => {
+      const runner = server.run(() => {});
+      runner.once("suite", (suite) => {
+        resolve(suite.total());
+      });
+    });
+    
+    await client.connect();
+    expect(await totalCount).equals(2);
+  });
 });

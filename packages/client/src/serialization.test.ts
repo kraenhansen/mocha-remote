@@ -15,11 +15,26 @@ describe("Client serialization", () => {
   });
 
   it("can serialize a Test", () => {
+    const suite = new Suite("root suite");
     const test = new Test("test title");
-    test.parent = new Suite("root suite");
+    suite.addTest(test);
+
     const result = serialize(test);
     const parsed = parse(result);
-    expect(parsed).contain.keys("type", "__mocha_id__");
+    expect(parsed).contain.keys("type", "__mocha_id__", "$$fullTitle");
+    expect(parsed.$$fullTitle).equals("root suite test title");
+  });
+
+  it("can serialize a Suite", () => {
+    const suite = new Suite("root suite");
+    const test = new Test("test title");
+    suite.addTest(test);
+
+    const result = serialize(test.parent);
+    const parsed = parse(result);
+    expect(parsed).contain.keys("type", "__mocha_id__", "$$fullTitle", "$$total");
+    expect(parsed.$$fullTitle).equals("root suite");
+    expect(parsed.$$total).equals(1);
   });
 
   it("can serialize a Test with a parent Suite", () => {
@@ -29,8 +44,7 @@ describe("Client serialization", () => {
       // eslint-disable-next-line no-console
       console.log("Before hook ran");
     });
-    test.parent = suite;
-    suite.tests = [ test ];
+    suite.addTest(test);
     {
       // Serializing the first time should return an object with $type and $properties
       const result = serialize(test);

@@ -1,4 +1,5 @@
 import * as flatted from "flatted";
+import { Suite } from "mocha-remote-mocha";
 
 import { extend } from "./debug";
 const debug = extend("serialization");
@@ -17,7 +18,15 @@ function toJSON(value: Record<string, unknown>): Record<string, unknown> {
       stack: stack ? filterStack(stack) : stack,
     };
   } else if (typeof value === "object" && typeof value.serialize === "function") {
-    return value.serialize();
+    const result = value.serialize();
+    if (value instanceof Suite) {
+      // Polyfill missing methods
+      Object.assign(result, {
+        "type": "suite",
+        "$$total": value.total(),
+      });
+    }
+    return result;
   } else {
     return value;
   }
