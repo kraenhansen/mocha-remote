@@ -16,11 +16,6 @@ new Client({
       }
     }
 
-    // Write to a file once the process exits, for the test to get the status code and pid
-    process.once("exit", (code) => {
-      fs.writeFileSync(outFile, JSON.stringify({ code, pid: process.pid }), "utf8");
-    });
-
     it("succeeds but doesn't exit", () => {});
   }
 });

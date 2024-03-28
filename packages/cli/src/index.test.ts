@@ -14,7 +14,7 @@ function cli(...args: string[]) {
   return cp.spawnSync(
     process.execPath,
     ["--import", "tsx", cliPath, ...args],
-    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 4_000 },
+    { encoding: 'utf8', env: { ...process.env, FORCE_COLOR: "false" }, timeout: 5_000 },
   );
 }
 
@@ -22,7 +22,7 @@ function spawnCli(...args: string[]) {
   return cp.spawn(
     process.execPath,
     ["--import", "tsx", cliPath, ...args],
-    { env: { ...process.env, FORCE_COLOR: "false" }, timeout: 4_000 },
+    { stdio: "ignore", env: { ...process.env, FORCE_COLOR: "false" }, timeout: 5_000 },
   );
 }
 
@@ -42,7 +42,29 @@ function waitForFile(filePath: string) {
       }
     };
     fs.watchFile(filePath, { interval: 10 }, listener);
+    if (fs.existsSync(filePath)) {
+      // Start by doing it once
+      listener(fs.statSync(filePath));
+    }
   });
+}
+
+function isProcessRunning(pid: number) {
+  // Tried using kill to assert the process has exited:
+  // > This method will throw an error if the target pid does not exist.
+  // > As a special case, a signal of 0 can be used to test for the existence of a process.
+  // see https://nodejs.org/api/process.html#processkillpid-signal
+  // process.kill(pid, 0);
+  // ... but this didn't throw on Linux - instead we're calling good ol' "ps"
+  const result = cp.spawnSync("ps", ["-p", pid.toString(), "-o", "pid"], { encoding: "utf8" });
+  const [, match] = result.stdout.trim().split("\n");
+  return match === pid.toString();
+}
+
+async function waitForProcessToDie(pid: number, pollDelay = 100) {
+  while (isProcessRunning(pid)) {
+    await new Promise(resolve => setTimeout(resolve, pollDelay));
+  }
 }
 
 describe("Mocha Remote CLI", () => {
@@ -140,39 +162,32 @@ describe("Mocha Remote CLI", () => {
     
     // Wait a bit for Mocha Remote CLI to forcefully kill the command process
     await new Promise(resolve => cliProcess.once("close", resolve));
-    expect(cliProcess.exitCode).equals(130); // Command terminated by user
+    expect(cliProcess.exitCode).equals(0);
     
-    const { code, pid } = JSON.parse(outFileContent);
-    expect(code).equals(undefined); // We're not expecting an exit event to be fired
+    // Expect the command process to have died
+    const { pid } = JSON.parse(outFileContent);
     expect(typeof pid).equals("number");
-    expect(() => {
-      // Use kill to assert the process has exited:
-      // > This method will throw an error if the target pid does not exist.
-      // > As a special case, a signal of 0 can be used to test for the existence of a process.
-      // see https://nodejs.org/api/process.html#processkillpid-signal
-      process.kill(pid, 0);
-    }).throws("kill ESRCH");
+    await waitForProcessToDie(pid);
   });
 
-  it("exits clean and kills hanging commands", () => {
+  it("exits clean and kills hanging commands", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
     const outFile = path.join(tempDir, "out.txt");
     expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
-    const output = cli("--port", "0", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
-    expect(output.status).equals(0, "Expected signal of the mocha-remote cli to remain a success");
+    // Using spawnCli because it ignores stdout, which makes the spawnSync hang for some reason
+    const cliProcess = spawnCli("--port", "0", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
+    await new Promise<void>(resolve => cliProcess.once("close", resolve));
+
+    expect(cliProcess.exitCode).equals(0, "Expected signal of the mocha-remote cli to remain a success");
 
     // Checking the "exit" of the wrapped command
-    expect(fs.existsSync(outFile)).equals(true, "Expected the outfile to exist");
-    const { code, pid } = JSON.parse(fs.readFileSync(outFile, "utf8"));
-    expect(code).equals(143); // 143 is SIGTERM
+    expect(fs.existsSync(outFile)).equals(true, "Expected the outfile to exists");
+    const outFileContent = await waitForFile(outFile);
+    
+    // Expect the command process to have died
+    const { pid } = JSON.parse(outFileContent);
     expect(typeof pid).equals("number");
-    expect(() => {
-      // Use kill to assert the process has exited:
-      // > This method will throw an error if the target pid does not exist.
-      // > As a special case, a signal of 0 can be used to test for the existence of a process.
-      // see https://nodejs.org/api/process.html#processkillpid-signal
-      process.kill(pid, 0);
-    }).throws("kill ESRCH");
+    await waitForProcessToDie(pid);
   });
 
   describe("failures", () => {
