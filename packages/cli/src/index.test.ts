@@ -139,7 +139,7 @@ describe("Mocha Remote CLI", () => {
     expect(success).equals(true, "Expected mocha-remote cli to exit when interrupted");
     
     // Wait a bit for Mocha Remote CLI to forcefully kill the command process
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => cliProcess.once("close", resolve));
     expect(cliProcess.exitCode).equals(130); // Command terminated by user
     
     const { code, pid } = JSON.parse(outFileContent);
