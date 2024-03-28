@@ -18,10 +18,31 @@ function cli(...args: string[]) {
   );
 }
 
+function spawnCli(...args: string[]) {
+  return cp.spawn(
+    process.execPath,
+    ["--import", "tsx", cliPath, ...args],
+    { env: { ...process.env, FORCE_COLOR: "false" }, timeout: 4_000 },
+  );
+}
+
 function parseJsonOutput(output: string) {
   const jsonStart = output.indexOf("{");
   const jsonEnd = output.lastIndexOf("}");
   return JSON.parse(output.slice(jsonStart, jsonEnd + 1));
+}
+
+function waitForFile(filePath: string) {
+  return new Promise<string>(resolve => {
+    const listener = (stats: fs.Stats) => {
+      if (stats.isFile()) {
+        // Stop listening for changes
+        fs.unwatchFile(filePath, listener);
+        resolve(fs.readFileSync(filePath, "utf8"));
+      }
+    };
+    fs.watchFile(filePath, { interval: 10 }, listener);
+  });
 }
 
 describe("Mocha Remote CLI", () => {
@@ -107,18 +128,44 @@ describe("Mocha Remote CLI", () => {
     expect(output.status).equals(0);
   });
 
-  it("exits clean and kills command", () => {
+  it("kills unresponsive command when interrupted", async () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
     const outFile = path.join(tempDir, "out.txt");
-    expect(!fs.existsSync(outFile), "Expected the outfile to be missing");
+    expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
+    const cliProcess = spawnCli("--port", "0", "--context", `endlessLoop,outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
+
+    const outFileContent = await waitForFile(outFile);
+    const success = cliProcess.kill("SIGINT"); // Interrupt Mocha Remote CLI
+    expect(success).equals(true, "Expected mocha-remote cli to exit when interrupted");
+    
+    // Wait a bit for Mocha Remote CLI to forcefully kill the command process
+    await new Promise(resolve => setTimeout(resolve, 100));
+    expect(cliProcess.exitCode).equals(130); // Command terminated by user
+    
+    const { code, pid } = JSON.parse(outFileContent);
+    expect(code).equals(undefined); // We're not expecting an exit event to be fired
+    expect(typeof pid).equals("number");
+    expect(() => {
+      // Use kill to assert the process has exited:
+      // > This method will throw an error if the target pid does not exist.
+      // > As a special case, a signal of 0 can be used to test for the existence of a process.
+      // see https://nodejs.org/api/process.html#processkillpid-signal
+      process.kill(pid, 0);
+    }).throws("kill ESRCH");
+  });
+
+  it("exits clean and kills hanging commands", () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
+    const outFile = path.join(tempDir, "out.txt");
+    expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
     const output = cli("--port", "0", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
-    expect(output.status).equals(0, "expected signal of the mocha-remote cli to remain a success");
+    expect(output.status).equals(0, "Expected signal of the mocha-remote cli to remain a success");
 
     // Checking the "exit" of the wrapped command
-    expect(fs.existsSync(outFile), "Expected the outfile to exist");
+    expect(fs.existsSync(outFile)).equals(true, "Expected the outfile to exist");
     const { code, pid } = JSON.parse(fs.readFileSync(outFile, "utf8"));
     expect(code).equals(143); // 143 is SIGTERM
-    expect(typeof pid).equals("number"); // 143 is SIGTERM
+    expect(typeof pid).equals("number");
     expect(() => {
       // Use kill to assert the process has exited:
       // > This method will throw an error if the target pid does not exist.
