@@ -5,13 +5,21 @@ const debug = extend("serialization");
 
 type Reviver = (this: unknown, key: string, value: unknown) => unknown;
 
+function smellsLikeMochaRemote(line: string) {
+  return line.includes("/mocha-remote");
+}
+
+function filterStack(stack: string) {
+  return stack.split("\n").filter(line => !smellsLikeMochaRemote(line)).join("\n");
+}
+
 export function createReviver(): Reviver {
 
   function reviveObject(obj: Record<string, unknown>) {
     if (obj.type === "error") {
       if (typeof obj.message === "string" && typeof obj.stack === "string") {
         const err = new Error(obj.message);
-        err.stack = obj.stack;
+        err.stack = filterStack(obj.stack);
         return err;
       } else {
         throw new Error("Expected Error to have message and stack");

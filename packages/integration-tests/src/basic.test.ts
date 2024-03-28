@@ -22,6 +22,7 @@ describe("basic", () => {
     await server.start();
     expect(server.url).to.oneOf([
       "ws://localhost:8090",
+      "ws://127.0.0.1:8090",
       "ws://[::1]:8090"
     ]);
   });

@@ -1,24 +1,28 @@
-import fs from "fs";
+import assert from "node:assert";
+import fs from "node:fs";
+import cp from "node:child_process";
+import { inspect } from "node:util";
+
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import cp from "child_process";
 import chalk from "chalk";
-import { inspect } from "util";
+
+import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "mocha-remote-server";
 
 const packageJsonPath = new URL("../package.json", import.meta.url);
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
-import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "mocha-remote-server";
-
 export type Logger = (...args: unknown[]) => void;
 
 export type CleanupTask = () => (void | Promise<void>);
-const cleanupTasks: CleanupTask[] = [];
+const cleanupTasks = new Set<CleanupTask>();
 
-async function cleanup() {
+function cleanup() {
   // Move the tasks into a local variable to avoid rerunning these on multiple invokations
-  const tasks = cleanupTasks.splice(0, cleanupTasks.length);
-  await Promise.all(tasks.map(task => task())).catch(err => {
+  const tasks = [...cleanupTasks];
+  cleanupTasks.clear();
+  // Execute a chain of promises
+  tasks.reduce((previous, task) => previous.then(task), Promise.resolve()).catch(err => {
     // eslint-disable-next-line no-console
     console.error(`Failed while cleaning up: ${err}`);
   });
@@ -76,10 +80,10 @@ type ServerOptions = {
 
 // Start the server
 export async function startServer({ log, server, command, exitOnError }: ServerOptions): Promise<void> {
-  cleanupTasks.push(async () => {
+  cleanupTasks.add(async () => {
     if (server.listening) {
-      log("🧹 Stopping server");
       await server.stop();
+      log("🧹 Stopped the server");
     }
   });
 
@@ -109,9 +113,7 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     if (code !== 1000 && exitOnError) {
       print(displayClient(ws), chalk.red("EXITTING"), "after an abnormal disconnect");
       process.exitCode = 1;
-      cleanup().then(() => {
-        process.exit();
-      });
+      cleanup();
     }
   });
 
@@ -158,19 +160,19 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
         MOCHA_REMOTE_ID: server.config.id,
       }
     });
+    const commandPid = commandProcess.pid;
+    assert(typeof commandPid === "number", "Expected command process to have a pid");
 
-    const commandDescription = `${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`
+    const commandDescription = `${chalk.italic(...command)} (pid = ${chalk.bold(commandPid)})`
     
-    cleanupTasks.push(() => {
-      if (commandProcess.connected) {
-        log(`🧹 Terminating: ${commandDescription}`);
-        const success = commandProcess.kill();
-        if (!success) {
-          log(`💀 Sending SIGKILL to pid = ${commandProcess.pid}`);
-          commandProcess.kill("SIGKILL");
-        }
-      }
-    });
+    const killCommandProcess = async () => {
+      // There's no need to await a close if the close was caused by a cleanup
+      commandProcess.removeListener("close", commandCloseListener);
+      commandProcess.kill();
+      log(`🧹 Terminated command (pid = ${chalk.bold(commandPid)})`);
+    };
+
+    cleanupTasks.add(killCommandProcess);
 
     /* eslint-disable-next-line no-console */
     log(
@@ -179,7 +181,10 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     );
 
     // We should exit when the command process exits - and vise versa
-    commandProcess.once("close", (code, signal) => {
+    const commandCloseListener = (code: number | null, signal: string | null) => {
+      // Avoid killing the process if it's already closed
+      cleanupTasks.delete(killCommandProcess);
+      // Print the exit and cause to the log
       const cause = exitCause(code, signal);
       log('\n' + chalk.dim(`Command exited (${cause})`));
       // Inherit exit code from sub-process if nothing has already sat it
@@ -187,15 +192,12 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
         process.exitCode = code;
       }
       cleanup();
-    });
+    };
 
-    process.on("SIGINT", () => {
-      commandProcess.kill("SIGINT");
-    });
-    
-    process.on("exit", () => {
-      cleanup();
-    });
+    commandProcess.once("close", commandCloseListener);
+
+    process.on("SIGINT", cleanup);
+    process.on("exit", cleanup);
   }
 }
 
@@ -344,6 +346,7 @@ export function run(args = hideBin(process.argv)): void {
             // Run once and exit with the failures as exit code
             server.run(failures => {
               process.exitCode = failures;
+              cleanup();
             });
           }
         },
