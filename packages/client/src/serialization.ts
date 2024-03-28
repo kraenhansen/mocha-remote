@@ -15,7 +15,7 @@ function toJSON(value: Record<string, unknown>): Record<string, unknown> {
     return {
       type: "error",
       message,
-      stack: stack ? filterStack(stack) : stack,
+      stack,
     };
   } else if (typeof value === "object" && typeof value.serialize === "function") {
     const result = value.serialize();
@@ -30,10 +30,6 @@ function toJSON(value: Record<string, unknown>): Record<string, unknown> {
   } else {
     return value;
   }
-}
-
-function filterStack(stack: string) {
-  return stack.split("\n").filter(line => line.includes("client/dist/node.bundle.cjs.js") === false).join("\n");
 }
 
 export function createReplacer(): Replacer {

@@ -1,8 +1,8 @@
 import { expect } from "chai";
-import { Suite, Test } from "mocha";
+import { Test } from "mocha";
 import { stringify } from "flatted";
 
-import { deserialize, createReviver } from "./serialization";
+import { deserialize } from "./serialization";
 
 describe("Server serialization", () => {
 
