@@ -13,11 +13,12 @@ import { Server, ReporterOptions, CustomContext, WebSocket, ClientError } from "
 export type Logger = (...args: unknown[]) => void;
 
 export type CleanupTask = () => (void | Promise<void>);
-const cleanupTasks: CleanupTask[] = [];
+const cleanupTasks = new Set<CleanupTask>();
 
 async function cleanup() {
   // Move the tasks into a local variable to avoid rerunning these on multiple invokations
-  const tasks = cleanupTasks.splice(0, cleanupTasks.length);
+  const tasks = [...cleanupTasks];
+  cleanupTasks.clear();
   await Promise.all(tasks.map(task => task())).catch(err => {
     // eslint-disable-next-line no-console
     console.error(`Failed while cleaning up: ${err}`);
@@ -76,7 +77,7 @@ type ServerOptions = {
 
 // Start the server
 export async function startServer({ log, server, command, exitOnError }: ServerOptions): Promise<void> {
-  cleanupTasks.push(async () => {
+  cleanupTasks.add(async () => {
     if (server.listening) {
       log("🧹 Stopping server");
       await server.stop();
@@ -161,16 +162,16 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
 
     const commandDescription = `${chalk.italic(...command)} (pid = ${chalk.bold(commandProcess.pid)})`
     
-    cleanupTasks.push(() => {
-      if (commandProcess.connected) {
+    const killCommandProcess = () => {
         log(`🧹 Terminating: ${commandDescription}`);
         const success = commandProcess.kill();
         if (!success) {
           log(`💀 Sending SIGKILL to pid = ${commandProcess.pid}`);
           commandProcess.kill("SIGKILL");
         }
-      }
-    });
+    };
+
+    cleanupTasks.add(killCommandProcess);
 
     /* eslint-disable-next-line no-console */
     log(
@@ -180,6 +181,9 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
 
     // We should exit when the command process exits - and vise versa
     commandProcess.once("close", (code, signal) => {
+      // Avoid killing the process if it's already closed
+      cleanupTasks.delete(killCommandProcess);
+      // Print the exit and cause to the log
       const cause = exitCause(code, signal);
       log('\n' + chalk.dim(`Command exited (${cause})`));
       // Inherit exit code from sub-process if nothing has already sat it
@@ -344,6 +348,7 @@ export function run(args = hideBin(process.argv)): void {
             // Run once and exit with the failures as exit code
             server.run(failures => {
               process.exitCode = failures;
+              cleanup();
             });
           }
         },
