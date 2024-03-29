@@ -23,8 +23,8 @@ function cleanup() {
   cleanupTasks.clear();
   // Execute a chain of promises
   tasks.reduce((previous, task) => previous.then(task), Promise.resolve()).catch(err => {
-    // eslint-disable-next-line no-console
-    console.error(`Failed while cleaning up: ${err}`);
+    /* eslint-disable-next-line no-console */
+    console.error(chalk.red("ERROR"), `Failed to clean up: ${err.message}`);
   });
 }
 
@@ -80,11 +80,9 @@ type ServerOptions = {
 
 // Start the server
 export async function startServer({ log, server, command, exitOnError }: ServerOptions): Promise<void> {
-  cleanupTasks.add(async () => {
-    if (server.listening) {
-      await server.stop();
-      log("🧹 Stopped the server");
-    }
+  cleanupTasks.add(() => {
+    // Ensure that errors during cleanup doesn't result in a failure
+    exitOnError = false;
   });
 
   server.on('started', server => {
@@ -139,14 +137,14 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     }
   });
 
-  await server.start();
-  // User stopping the process in a terminal
-  process.on("SIGINT", () => {
-    server.stop().then(undefined, err => {
-      /* eslint-disable-next-line no-console */
-      console.error(chalk.red("ERROR"), `Failed to stop server: ${err.message}`);
-    });
+  cleanupTasks.add(async () => {
+    if (server.listening) {
+      await server.stop();
+      log("🧹 Stopped the server");
+    }
   });
+
+  await server.start();
 
   if (command && command.length > 0) {
     const [commandName, ...args] = command;

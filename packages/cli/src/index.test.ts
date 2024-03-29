@@ -154,7 +154,7 @@ describe("Mocha Remote CLI", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
     const outFile = path.join(tempDir, "out.txt");
     expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
-    const cliProcess = spawnCli("--port", "0", "--context", `endlessLoop,outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
+    const cliProcess = spawnCli("--port", "0", "--exit-on-error", "--context", `endlessLoop,outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
 
     const outFileContent = await waitForFile(outFile);
     const success = cliProcess.kill("SIGINT"); // Interrupt Mocha Remote CLI
@@ -175,7 +175,7 @@ describe("Mocha Remote CLI", () => {
     const outFile = path.join(tempDir, "out.txt");
     expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
     // Using spawnCli because it ignores stdout, which makes the spawnSync hang for some reason
-    const cliProcess = spawnCli("--port", "0", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
+    const cliProcess = spawnCli("--port", "0", "--exit-on-error", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
     await new Promise<void>(resolve => cliProcess.once("close", resolve));
 
     expect(cliProcess.exitCode).equals(0, "Expected signal of the mocha-remote cli to remain a success");
