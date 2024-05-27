@@ -28,14 +28,14 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^5.1.0",
+    "chai": "^5.1.1",
     "typed-emitter": "^2.1.0"
   },
   "dependencies": {
     "debug": "^4.3.4",
     "flatted": "^3.3.1",
     "mocha-remote-common": "1.12.2",
-    "ws": "^8.16.0"
+    "ws": "^8.17.0"
   },
   "peerDependencies": {
     "mocha": "^10.3.0"
