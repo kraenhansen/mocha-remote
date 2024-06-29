@@ -60,11 +60,20 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
     const client = new Client({
       title,
       async transformFailure(_, err) {
-        // TODO: Remove the two `as any` once https://github.com/facebook/react-native/pull/43566 gets released
-        const stack = parseErrorStack(err.stack as any);
-        const symbolicated = await symbolicateStackTrace(stack) as any;
-        err.stack = framesToStack(err, symbolicated.stack);
-        return err;
+        try {
+          // TODO: Remove the two `as any` once https://github.com/facebook/react-native/pull/43566 gets released
+          const stack = parseErrorStack(err.stack as any);
+          const symbolicated = await symbolicateStackTrace(stack) as any;
+          err.stack = framesToStack(err, symbolicated.stack);
+          return err;
+        } catch (symbolicateError) {
+          if (symbolicateError instanceof Error && symbolicateError.message === 'Bundle was not loaded from Metro.') {
+            // Just return the original error, if bundle isn't served from Metro
+            return err;
+          } else {
+            throw symbolicateError;
+          }
+        }
       },
       tests(context) {
         // Adding an async hook before each test to allow the UI to update
