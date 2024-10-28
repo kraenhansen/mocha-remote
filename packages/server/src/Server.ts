@@ -149,6 +149,9 @@ export class Server extends ServerEventEmitter {
         }
         // Close the server
         this.wss.close(err => {
+          // Delete the runner to allow another run
+          delete this.runner;
+
           // Forget about the server
           delete this.wss;
           // Reject or resolve the promise
