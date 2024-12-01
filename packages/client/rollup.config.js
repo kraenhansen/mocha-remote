@@ -3,7 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 
-import pkg from './package.json' assert { type: "json" };
+import pkg from './package.json' with { type: "json" };
 
 export default [{
   input: 'src/node/index.ts',
@@ -25,7 +25,7 @@ export default [{
       declaration: false,
     }),
   ],
-  external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client", "ws", "events"],
+  external: ["debug", "fast-deep-equal", "flatted", "ws", "events"],
 }, {
   input: 'src/browser/index.ts',
   output: [
@@ -47,7 +47,7 @@ export default [{
       declaration: false,
     }),
   ],
-  external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client"],
+  external: ["debug", "fast-deep-equal", "flatted"],
 }, {
   input: 'src/index.ts',
   output: [
@@ -63,5 +63,5 @@ export default [{
       respectExternal: true
     }),
   ],
-  external: ["debug", "fast-deep-equal", "flatted", "mocha-remote-client", "mocha"],
+  external: ["debug", "fast-deep-equal", "flatted", "mocha"],
 }];
