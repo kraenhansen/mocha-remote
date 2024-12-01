@@ -37,9 +37,6 @@
     "mocha-remote-common": "1.12.3",
     "ws": "^8.17.1"
   },
-  "peerDependencies": {
-    "mocha": "^10.3.0"
-  },
   "mocha": {
     "import": "tsx",
     "extension": [

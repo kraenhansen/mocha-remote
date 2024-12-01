@@ -34,7 +34,6 @@
     "debug": "^4.3.4",
     "fast-equals": "^5.0.1",
     "mocha-remote-common": "1.12.3",
-    "mocha": "10.4.0",
     "ws": "^8.17.1"
   },
   "devDependencies": {
