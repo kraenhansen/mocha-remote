@@ -1,5 +1,5 @@
 const path = require('path');
-const webpack = require('webpack');
+const rspack = require('@rspack/core');
 const { merge } = require('webpack-merge');
 
 const common = {
@@ -23,7 +23,7 @@ const common = {
     maxAssetSize: 300000,
   },
   plugins: [
-    new webpack.NormalModuleReplacementPlugin(
+    new rspack.NormalModuleReplacementPlugin(
       /^debug$/,
       path.resolve('./src/extended-debug.js'),
     ),
@@ -67,7 +67,7 @@ module.exports = [
       }
     },
     plugins: [
-      new webpack.ProvidePlugin({
+      new rspack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
         process: path.resolve('./src/mocked-process.js'),
       }),
