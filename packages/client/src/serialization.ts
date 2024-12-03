@@ -24,6 +24,13 @@ function toJSON(value: Record<string, unknown>): Record<string, unknown> {
       Object.assign(result, {
         "type": "suite",
         "$$total": value.total(),
+        // TODO: Implement a DeserializedSuite on the client side to properly reconstruct it
+        "suites": [],
+        "tests": [],
+        "_beforeAll": [],
+        "_beforeEach": [],
+        "_afterAll": [],
+        "_afterEach": [],
       });
     }
     return result;
