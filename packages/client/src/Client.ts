@@ -102,6 +102,16 @@ export enum ClientState {
 
 const noop = () => { /* tumbleweed */};
 
+function errorFromEvent(event: Event, fallbackMessage: string): Error {
+  if ("error" in event && event.error instanceof Error) {
+    return event.error;
+  } else if ("message" in event && typeof event.message === "string") {
+    return new Error(event.message);
+  } else {
+    return new Error(fallbackMessage);
+  }
+}
+
 export class Client extends ClientEventEmitter {
 
   public static WebSocket: typeof WebSocket;
@@ -187,29 +197,29 @@ export class Client extends ClientEventEmitter {
       this.ws = ws;
       this._state = ClientState.CONNECTING;
 
-      const errorBeforeConnection = (e: Event) => reject(e);
+      const handleConnectionError = (e: Event) => reject(errorFromEvent(e, "Failed to connect"));
 
       ws.addEventListener("close", this.handleClose);
 
       ws.addEventListener("message", this.handleMessage);
 
       ws.addEventListener("error", event => {
-        const { message } = event as ErrorEvent;
-        this.emit(ClientEvents.ERROR, new Error(message));
+        const error = errorFromEvent(event, "Failed to connect");
+        this.emit(ClientEvents.ERROR, error);
       });
       
       ws.addEventListener("open", () => {
         this.debug(`Connected to ${ws.url}`);
         this._state = ClientState.CONNECTED;
-        // No need to track errors before connection
-        ws.removeEventListener("error", errorBeforeConnection);
+        // No need to handle connection error now that we're connected
+        ws.removeEventListener("error", handleConnectionError);
         this.emit("connection", ws);
         resolve();
       });
 
       if (!this.config.autoReconnect) {
-        // Attaching this since the only failed state from connecting is
-        ws.addEventListener("error", errorBeforeConnection);
+        // Attaching this since the only failed state from connecting is when we're not reconnecting
+        ws.addEventListener("error", handleConnectionError);
       }
     })
   }
