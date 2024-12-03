@@ -1,0 +1,21 @@
+{
+  "name": "mocha-remote-mochawesome-test",
+  "private": true,
+  "scripts": {
+    "test": "mocha-remote --reporter mochawesome -- mocha-remote-node tests/index.js"
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "dependsOn": [
+          "^build"
+        ]
+      }
+    }
+  },
+  "dependencies": {
+    "mochawesome": "^7.1.3",
+    "mocha-remote-cli": "1.12.3",
+    "mocha-remote-node": "1.12.3"
+  }
+}
