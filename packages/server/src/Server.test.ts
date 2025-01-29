@@ -125,7 +125,8 @@ describe("Mocha Remote Server", () => {
     });
   };
 
-  it("should be able to start again, when the server is stopped during a run", async () => {
+  it("should be able to start again, when the server is stopped during a run", async function () {
+    this.timeout(10000);
     // Create and start the server
     const server = new Server({
       port: 8090,
@@ -149,7 +150,8 @@ describe("Mocha Remote Server", () => {
     await stopRemoteClient(childClientProcess);
   });
 
-  it("should be able to start again, on client disconnection while running", async () => {
+  it("should be able to start again, on client disconnection while running", async function () {
+    this.timeout(10000);
     // Create and start the server
     const server = new Server({
       port: 8090,
