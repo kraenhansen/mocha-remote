@@ -151,7 +151,6 @@ export class Server extends ServerEventEmitter {
         this.wss.close(err => {
           // Delete the runner to allow another run
           delete this.runner;
-
           // Forget about the server
           delete this.wss;
           // Reject or resolve the promise
@@ -324,6 +323,11 @@ export class Server extends ServerEventEmitter {
     // Check that the protocol matches
     const expectedProtocol = `mocha-remote-${this.config.id}`;
     ws.on("close", (code, reason) => {
+      if(this.runner) {
+        this.debug("Client disconnected while tests were running");
+        this.runner.emit("end");
+        delete this.runner;
+      }
       this.emit("disconnection", ws, code, reason.toString());
     });
     // Signal that a client has connected
