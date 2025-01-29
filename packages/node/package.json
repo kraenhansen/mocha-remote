@@ -1,0 +1,14 @@
+{
+  "name": "mocha-remote-node",
+  "version": "1.12.3",
+  "type": "module",
+  "description": "Node.js wrapper for the Mocha Remote Client",
+  "bin": "./mocha-remote-node.js",
+  "scripts": {
+    "start": "tsx src/cli.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "glob": "^10.4.5"
+  }
+}
