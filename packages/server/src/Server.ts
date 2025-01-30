@@ -149,8 +149,7 @@ export class Server extends ServerEventEmitter {
         }
         // Close the server
         this.wss.close(err => {
-          // Delete the runner to allow another run
-          delete this.runner;
+          this.handleReset();
           // Forget about the server
           delete this.wss;
           // Reject or resolve the promise
@@ -200,11 +199,6 @@ export class Server extends ServerEventEmitter {
     // Attach event listeners to update stats
     createStatsCollector(this.runner as Mocha.Runner);
 
-    // Bind listeners to the runner, re-emitting events on the server itself
-    this.runner.on("end", () => {
-      this.emit("end");
-    });
-
     // Set the client options, to be passed to the next running client
     this.clientOptions = {
       grep: this.config.grep,
@@ -243,12 +237,9 @@ export class Server extends ServerEventEmitter {
     // Attach a listener to the run ending
     this.runner.once(FakeRunner.constants.EVENT_RUN_END, () => {
       const failures = this.runner ? this.runner.failures : 0;
-      // Delete the runner to allow another run
-      delete this.runner;
-      // Get rid of the client options
-      delete this.clientOptions;
       // Call any callbacks to signal completion
       done(failures);
+      this.handleReset();
     });
 
     // If we already have a client, tell it to run
@@ -323,11 +314,6 @@ export class Server extends ServerEventEmitter {
     // Check that the protocol matches
     const expectedProtocol = `mocha-remote-${this.config.id}`;
     ws.on("close", (code, reason) => {
-      if(this.runner) {
-        this.debug("Client disconnected while tests were running");
-        this.runner.emit("end");
-        delete this.runner;
-      }
       this.emit("disconnection", ws, code, reason.toString());
     });
     // Signal that a client has connected
@@ -343,16 +329,17 @@ export class Server extends ServerEventEmitter {
     }
     if (this.client) {
       this.debug("A client was already connected");
-      this.client.removeAllListeners();
       this.client.close(
         1013 /* try again later */,
         "Got a connection from another client"
       );
-      delete this.client;
+      // Reset the server to prepare for the incoming client
+      this.handleReset();
     }
     // Hang onto the client
     this.client = ws;
     this.client.on("message", this.handleMessage.bind(this, this.client));
+    this.client.once("close", this.handleReset);
     // If we already have a runner, it can run now that we have a client
     if (this.runner) {
       if (this.clientOptions) {
@@ -402,6 +389,28 @@ export class Server extends ServerEventEmitter {
       } else {
         throw err;
       }
+    }
+  };
+
+  /**
+   * Resets the server for another test run.
+   */
+  private handleReset = () => {
+    // Forget everything about the runner and the client
+    const { runner, client } = this;
+    delete this.runner;
+    delete this.client;
+    delete this.clientOptions;
+    if (runner) {
+      runner.removeAllListeners();
+      // Relay this onto the server itself
+      this.emit("end");
+    }
+    if (client) {
+      if (client.readyState !== WebSocket.CLOSED) {
+        client.terminate();
+      }
+      client.removeAllListeners();
     }
   };
 
