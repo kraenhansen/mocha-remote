@@ -110,7 +110,9 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     print(displayClient(ws), color("DISCONNECTION"), `${msg} (code = ${code})`);
     if (code !== 1000 && exitOnError) {
       print(displayClient(ws), chalk.red("EXITTING"), "after an abnormal disconnect");
-      process.exitCode = 1;
+      if (typeof process.exitCode !== "number") {
+        process.exitCode = 1;
+      }
       cleanup();
     }
   });
@@ -132,7 +134,9 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     }
     // Exit right away
     if (exitOnError) {
-      process.exitCode = 1;
+      if (typeof process.exitCode !== "number") {
+        process.exitCode = 1;
+      }
       cleanup();
     }
   });
@@ -343,7 +347,9 @@ export function run(args = hideBin(process.argv)): void {
           if (!argv.watch) {
             // Run once and exit with the failures as exit code
             server.run(failures => {
-              process.exitCode = failures;
+              if (typeof process.exitCode !== "number") {
+                process.exitCode = failures;
+              }
               cleanup();
             });
           }
@@ -351,7 +357,9 @@ export function run(args = hideBin(process.argv)): void {
         err => {
           /* eslint-disable-next-line no-console */
           console.error(chalk.red("ERROR"), err.message);
-          process.exitCode = 1;
+          if (typeof process.exitCode !== "number") {
+            process.exitCode = 1;
+          }
         }
       );
     })
