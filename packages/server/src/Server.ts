@@ -234,6 +234,11 @@ export class Server extends ServerEventEmitter {
       }
     };
 
+    // Emit event when the tests starts running
+    this.runner.once(FakeRunner.constants.EVENT_RUN_BEGIN, () => {
+      this.emit("running", this.runner as Mocha.Runner);
+    });
+
     // Attach a listener to the run ending
     this.runner.once(FakeRunner.constants.EVENT_RUN_END, () => {
       const failures = this.runner ? this.runner.failures : 0;
