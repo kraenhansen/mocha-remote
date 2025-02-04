@@ -5,9 +5,11 @@ import type http from "http";
 import type { Debugger } from "debug";
 
 import type { Server } from "./Server";
+import type { Runner } from "mocha";
 
 export enum ServerEvents {
   STARTED = "started",
+  RUNNING = "running",
   CONNECTION = "connection",
   DISCONNECTION = "disconnection",
   ERROR = "error",
@@ -15,6 +17,7 @@ export enum ServerEvents {
 }
 
 export type StartedListener = (server: Server) => void;
+export type RunningListener = (runner: Runner) => void;
 export type ConnectionListener = (ws: WebSocket, req: http.IncomingMessage) => void;
 export type DisconnectionListener = (ws: WebSocket, code: number, reason: string) => void;
 export type ErrorListener = (error: Error) => void;
@@ -26,8 +29,8 @@ export type MessageEvents = {
   disconnection: DisconnectionListener,
   error: ErrorListener,
   end: EndListener,
-  /*
   running: RunningListener,
+  /*
   test: TestListener,
   */
 }
