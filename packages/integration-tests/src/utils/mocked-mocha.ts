@@ -15,7 +15,8 @@ export class MockedMocha extends Mocha {
       return this;
     };
     // Create and attach the reporter
-    const Reporter = (this as any)._reporter as Mocha.ReporterConstructor;
+    // @ts-expect-error -- Accessing a private API
+    const Reporter = this._reporter as Mocha.ReporterConstructor;
     const reporter = new Reporter(runner, {});
     assert(reporter);
     // Start the run asynchroniously to allow listeners to attach

@@ -32,7 +32,8 @@ describe("basic", () => {
     server = new Server({ port: 0 });
     await server.start();
     const serverConnection = new Promise<void>(resolve => {
-      (server as any).wss.once("connection", () => {
+      // @ts-expect-error -- Accessing a private API
+      server.wss.once("connection", () => {
         resolve();
       });
     });

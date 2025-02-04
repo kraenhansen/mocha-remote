@@ -15,7 +15,8 @@ export const enable = () => {
     buffers.push(chunk);
   });
   // Monkey patch the write method of stdout
-  (global.process.stdout as any).write = stream.write.bind(stream);
+  // @ts-expect-error -- The signatures doesn't align
+  global.process.stdout.write = stream.write.bind(stream);
   // Return a method
   return () => {
     disable();

@@ -61,9 +61,11 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
       title,
       async transformFailure(_, err) {
         try {
-          // TODO: Remove the two `as any` once https://github.com/facebook/react-native/pull/43566 gets released
-          const stack = parseErrorStack(err.stack as any);
-          const symbolicated = await symbolicateStackTrace(stack) as any;
+          // TODO: Remove the following two "ts-expect-error" once https://github.com/facebook/react-native/pull/43566 gets released
+          // @ts-expect-error -- This is a private API
+          const stack = parseErrorStack(err.stack);
+          const symbolicated = await symbolicateStackTrace(stack);
+          // @ts-expect-error -- This is a private API
           err.stack = framesToStack(err, symbolicated.stack);
           return err;
         } catch (symbolicateError) {
@@ -89,7 +91,7 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
       .on("connection", () => {
         setConnected(true);
       })
-      .on("disconnection", ({ reason }) => {
+      .on("disconnection", (/* { reason } */) => {
         setConnected(false);
       })
       .on("running", (runner) => {

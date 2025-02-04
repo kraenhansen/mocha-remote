@@ -1,6 +1,7 @@
 {
   "name": "mocha-remote-mocha",
   "version": "1.8.0",
+  "type": "commonjs",
   "private": true,
   "description": "An internal simplified version of Mocha to be used from a client",
   "scripts": {
@@ -27,8 +28,14 @@
     "debug": "^4.3.3"
   },
   "eslintConfig": {
+    "parserOptions": {
+      "sourceType": "commonjs"
+    },
     "env": {
       "commonjs": true
+    },
+    "rules": {
+      "@typescript-eslint/no-var-requires": "off"
     },
     "overrides": [
       {

@@ -2,10 +2,11 @@ import assert from 'assert';
 
 import * as ob from './output-buffering';
 
+/* eslint no-console: off */
+
 describe('Output buffering', () => {
   it('Captures and returns the output', () => {
     const disable = ob.enable();
-    // tslint:disable-next-line:no-console
     console.log('Hello!');
     const output = disable();
     assert(output instanceof Buffer);

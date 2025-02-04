@@ -29,14 +29,14 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^20",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
     "@nx/js": "^19.3.2",
     "chai": "^5.1.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "mocha": "11.0.1",
-    "prettier": "^3.2.5",
+    "prettier": "^2.8.8",
     "tsx": "^4.7.3",
     "typescript": "^5.4.5",
     "ws": "^8.17.1",
@@ -44,33 +44,19 @@
   },
   "eslintConfig": {
     "root": true,
+    "parser": "@typescript-eslint/parser",
     "extends": [
       "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
       "prettier"
     ],
     "ignorePatterns": [
-      "**/dist/",
-      "packages/integration-tests/environments/"
+      "**/dist/"
     ],
-    "parserOptions": {
-      "ecmaVersion": 2018
-    },
-    "env": {
-      "es2017": true
-    },
     "rules": {
       "no-console": "warn"
     },
     "overrides": [
-      {
-        "files": "**/*.ts",
-        "parser": "@typescript-eslint/parser",
-        "extends": [
-          "eslint:recommended",
-          "plugin:@typescript-eslint/recommended",
-          "prettier"
-        ]
-      },
       {
         "files": "scripts/*.js",
         "env": {

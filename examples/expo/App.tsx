@@ -1,8 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
-import React from "react";
+import React from 'react';
 import { StyleSheet, View, SafeAreaView } from 'react-native';
 
-import { MochaRemoteProvider, ConnectionText, StatusEmoji, StatusText } from "mocha-remote-react-native";
+import {
+  MochaRemoteProvider,
+  ConnectionText,
+  StatusEmoji,
+  StatusText,
+} from 'mocha-remote-react-native';
 
 function loadTests() {
   require('./simple.test.js');
@@ -36,14 +41,14 @@ const styles = StyleSheet.create({
   statusEmoji: {
     fontSize: 30,
     margin: 30,
-    textAlign: "center",
+    textAlign: 'center',
   },
   statusText: {
     fontSize: 20,
     margin: 20,
-    textAlign: "center",
+    textAlign: 'center',
   },
   connectionText: {
-    textAlign: "center",
+    textAlign: 'center',
   },
 });
