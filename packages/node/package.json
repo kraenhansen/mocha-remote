@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-node",
-  "version": "1.13.0",
+  "version": "1.13.1",
   "type": "module",
   "description": "Node.js wrapper for the Mocha Remote Client",
   "bin": "./mocha-remote-node.js",
@@ -10,6 +10,6 @@
   },
   "dependencies": {
     "glob": "^10.4.5",
-    "mocha-remote-client": "1.13.0"
+    "mocha-remote-client": "1.13.1"
   }
 }
