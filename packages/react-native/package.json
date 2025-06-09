@@ -16,7 +16,7 @@
   },
   "peerDependencies": {
     "react-native": "*",
-    "react": "^18"
+    "react": "^18||^19"
   },
   "devDependencies": {
     "@react-native/typescript-config": "^0.74.81"
