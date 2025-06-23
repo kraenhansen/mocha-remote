@@ -154,7 +154,6 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
     const [commandName, ...args] = command;
     const commandProcess = cp.spawn(commandName, args, {
       stdio: "inherit",
-      shell: true,
       env: {
         ...process.env,
         MOCHA_REMOTE_URL: server.url,
