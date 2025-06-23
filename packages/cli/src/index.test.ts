@@ -80,7 +80,7 @@ describe("Mocha Remote CLI", () => {
   });
 
   it("expose url, port and id as environment variables", () => {
-    const output = cli("--port", "0", "--", "node", "--print", "\"JSON.stringify(process.env)\"");
+    const output = cli("--port", "0", "--", "node", "--print", '"JSON.stringify(process.env)"');
     const jsonOuput = parseJsonOutput(output.stdout);
     expect(jsonOuput).include.keys("MOCHA_REMOTE_URL", "MOCHA_REMOTE_ID");
     const MOCHA_REMOTE_URL: string = jsonOuput.MOCHA_REMOTE_URL;
@@ -198,7 +198,7 @@ describe("Mocha Remote CLI", () => {
 
   describe("failures", () => {
     it("propagates failures as exit code", () => {
-      const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "tsx", "src/test/simple-client.ts");
+      const output = cli("--port", "0", "--context", "failure='Totally expected'", "--", "tsx", "src/test/simple-client.ts");
       expect(output.stdout).contains("Totally expected");
       expect(output.status).equals(1);
     });
