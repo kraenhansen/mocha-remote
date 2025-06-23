@@ -1,6 +1,6 @@
 {
   "name": "mocha-remote-client",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "Run Mocha tests somewhere - get reporting elsewhere",
   "scripts": {
     "build": "rollup -c",
@@ -33,7 +33,7 @@
   "dependencies": {
     "debug": "^4.3.4",
     "fast-equals": "^5.0.1",
-    "mocha-remote-common": "1.13.1",
+    "mocha-remote-common": "1.13.2",
     "ws": "^8.17.1"
   },
   "devDependencies": {
