@@ -57,8 +57,7 @@ function isProcessRunning(pid: number) {
   // process.kill(pid, 0);
   // ... but this didn't throw on Linux - instead we're calling good ol' "ps"
   const result = cp.spawnSync("ps", ["-p", pid.toString(), "-o", "pid"], { encoding: "utf8" });
-  const [, match] = result.stdout.trim().split("\n");
-  return match === pid.toString();
+  return result.status === 0;
 }
 
 async function waitForProcessToDie(pid: number, pollDelay = 100) {
@@ -74,13 +73,13 @@ describe("Mocha Remote CLI", () => {
   });
 
   it("run the command after -- and propagates exit status code", () => {
-    const output = cli("--port", "0", "--", "node", "--eval", "\"console.log('hello!');process.exit(13);\"");
+    const output = cli("--port", "0", "--", "node", "--eval", "console.log('hello!');process.exit(13);");
     expect(output.stdout).contains("hello!");
     expect(output.status).equals(13, "expected signal to propagate");
   });
 
   it("expose url, port and id as environment variables", () => {
-    const output = cli("--port", "0", "--", "node", "--print", '"JSON.stringify(process.env)"');
+    const output = cli("--port", "0", "--", "node", "--print", 'JSON.stringify(process.env)');
     const jsonOuput = parseJsonOutput(output.stdout);
     expect(jsonOuput).include.keys("MOCHA_REMOTE_URL", "MOCHA_REMOTE_ID");
     const MOCHA_REMOTE_URL: string = jsonOuput.MOCHA_REMOTE_URL;
