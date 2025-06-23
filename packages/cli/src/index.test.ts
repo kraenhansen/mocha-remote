@@ -32,7 +32,7 @@ function parseJsonOutput(output: string) {
   return JSON.parse(output.slice(jsonStart, jsonEnd + 1));
 }
 
-function waitForFile(filePath: string) {
+function waitForFile(filePath: string, interval = 10) {
   return new Promise<string>(resolve => {
     const listener = (stats: fs.Stats) => {
       if (stats.isFile()) {
@@ -41,7 +41,7 @@ function waitForFile(filePath: string) {
         resolve(fs.readFileSync(filePath, "utf8"));
       }
     };
-    fs.watchFile(filePath, { interval: 10 }, listener);
+    fs.watchFile(filePath, { interval }, listener);
     if (fs.existsSync(filePath)) {
       // Start by doing it once
       listener(fs.statSync(filePath));
@@ -57,8 +57,7 @@ function isProcessRunning(pid: number) {
   // process.kill(pid, 0);
   // ... but this didn't throw on Linux - instead we're calling good ol' "ps"
   const result = cp.spawnSync("ps", ["-p", pid.toString(), "-o", "pid"], { encoding: "utf8" });
-  const [, match] = result.stdout.trim().split("\n");
-  return match === pid.toString();
+  return result.status === 0;
 }
 
 async function waitForProcessToDie(pid: number, pollDelay = 100) {
@@ -74,13 +73,13 @@ describe("Mocha Remote CLI", () => {
   });
 
   it("run the command after -- and propagates exit status code", () => {
-    const output = cli("--port", "0", "--", "node", "--eval", "\"console.log('hello!');process.exit(13);\"");
+    const output = cli("--port", "0", "--", "node", "--eval", "console.log('hello!');process.exit(13);");
     expect(output.stdout).contains("hello!");
     expect(output.status).equals(13, "expected signal to propagate");
   });
 
   it("expose url, port and id as environment variables", () => {
-    const output = cli("--port", "0", "--", "node", "--print", "\"JSON.stringify(process.env)\"");
+    const output = cli("--port", "0", "--", "node", "--print", 'JSON.stringify(process.env)');
     const jsonOuput = parseJsonOutput(output.stdout);
     expect(jsonOuput).include.keys("MOCHA_REMOTE_URL", "MOCHA_REMOTE_ID");
     const MOCHA_REMOTE_URL: string = jsonOuput.MOCHA_REMOTE_URL;
@@ -174,25 +173,31 @@ describe("Mocha Remote CLI", () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mocha-remote-cli-test-"));
     const outFile = path.join(tempDir, "out.txt");
     expect(fs.existsSync(outFile)).equals(false, "Expected the outfile to be missing");
+
+    // Delay to wait before test succeeds - gives us time to read the pid and assert the process is running
+    const delay = 100;
+
     // Using spawnCli because it ignores stdout, which makes the spawnSync hang for some reason
-    const cliProcess = spawnCli("--port", "0", "--exit-on-error", "--context", `outFile=${outFile}`,  "--", "tsx", "src/test/hanging-client.ts");
-    await new Promise<void>(resolve => cliProcess.once("close", resolve));
+    const cliProcess = spawnCli("--port", "0", "--exit-on-error", "--context", `outFile=${outFile},delay=${delay}`,  "--", "tsx", "src/test/hanging-client.ts");
 
-    expect(cliProcess.exitCode).equals(0, "Expected signal of the mocha-remote cli to remain a success");
-
-    // Checking the "exit" of the wrapped command
-    expect(fs.existsSync(outFile)).equals(true, "Expected the outfile to exists");
-    const outFileContent = await waitForFile(outFile);
+    // Poll for the pid
+    const outFileContent = await waitForFile(outFile, delay / 10);
     
-    // Expect the command process to have died
+    // Assert the process is running (to ensure we can detect exits reliably)
     const { pid } = JSON.parse(outFileContent);
     expect(typeof pid).equals("number");
+    expect(isProcessRunning(pid)).equals(true, "Expected the command process to be running");
+
+    // Wait for the CLI to exit cleanly
+    await new Promise<void>(resolve => cliProcess.once("close", resolve));
+    expect(cliProcess.exitCode).equals(0, "Expected signal of the mocha-remote cli to remain a success");
+
     await waitForProcessToDie(pid);
   });
 
   describe("failures", () => {
     it("propagates failures as exit code", () => {
-      const output = cli("--port", "0", "--context", "failure=Totally expected", "--", "tsx", "src/test/simple-client.ts");
+      const output = cli("--port", "0", "--context", "failure='Totally expected'", "--", "tsx", "src/test/simple-client.ts");
       expect(output.stdout).contains("Totally expected");
       expect(output.status).equals(1);
     });

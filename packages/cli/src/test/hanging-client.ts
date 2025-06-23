@@ -4,9 +4,17 @@ import assert from "node:assert";
 import fs from "node:fs";
 
 new Client({
-  tests({ outFile, endlessLoop }) {
+  tests({ outFile, endlessLoop, delay = 0 }) {
     assert(typeof outFile === "string", "Expected a 'outFile' in context");
-    assert(fs.existsSync(outFile) === false, `Expected '${outFile}' to not exist`);
+    assert(
+      fs.existsSync(outFile) === false,
+      `Expected '${outFile}' to not exist`
+    );
+    assert(
+      typeof delay === "number",
+      "Expected 'delay' in context to be a number"
+    );
+
     fs.writeFileSync(outFile, JSON.stringify({ pid: process.pid }), "utf8");
 
     if (endlessLoop) {
@@ -16,8 +24,10 @@ new Client({
       }
     }
 
-    it("succeeds but doesn't exit", () => {});
-  }
+    it("succeeds but doesn't exit", async () => {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    });
+  },
 });
 
 // Do a long timeout to prevent an exit
