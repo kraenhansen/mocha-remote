@@ -9,7 +9,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "glob": "^10.5.0",
+    "glob": "^13.0.0",
     "mocha-remote-client": "1.13.2"
   }
 }
