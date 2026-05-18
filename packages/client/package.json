@@ -34,7 +34,7 @@
     "debug": "^4.3.4",
     "fast-equals": "^5.0.1",
     "mocha-remote-common": "1.13.2",
-    "ws": "^8.17.1"
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.0",
