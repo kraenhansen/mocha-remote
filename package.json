@@ -40,7 +40,7 @@
     "tsx": "^4.7.3",
     "typescript": "^5.4.5",
     "ws": "^8.21.0",
-    "nx": "^19.3.2"
+    "nx": "^23.1.2"
   },
   "eslintConfig": {
     "root": true,
