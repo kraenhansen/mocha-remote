@@ -19,7 +19,7 @@
     "react": "^18||^19"
   },
   "devDependencies": {
-    "@react-native/typescript-config": "^0.86.3",
+    "@react-native/typescript-config": "^0.87.1",
     "@types/react": "~19.3.0",
     "react": "19.2.3",
     "react-native": "0.86.3"
