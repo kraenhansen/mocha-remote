@@ -31,23 +31,23 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
-    "debug": "^4.3.4",
-    "fast-equals": "^5.0.1",
+    "debug": "^4.4.3",
+    "fast-equals": "^5.4.0",
     "mocha-remote-common": "1.13.2",
-    "ws": "^8.21.0"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.0",
-    "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.9",
+    "@rollup/plugin-node-resolve": "^15.3.1",
     "@rollup/plugin-typescript": "^11.1.6",
-    "chai": "^4.3.4",
+    "chai": "^5.3.2",
     "mocha-remote-mocha": "*",
-    "rollup": "^4.59.0",
-    "rollup-plugin-dts": "^6.1.0",
+    "rollup": "^4.63.4",
+    "rollup-plugin-dts": "^6.5.1",
     "typed-emitter": "^2.1.0",
     "util": "^0.12.3",
-    "webpack": "^5.105.0",
+    "webpack": "^5.111.1",
     "webpack-cli": "^5.1.4"
   },
   "eslintConfig": {
