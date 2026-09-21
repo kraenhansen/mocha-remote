@@ -27,8 +27,10 @@ export function createReviver(): Reviver {
     } else {
       // Turn $$ properties into functions
       for (const propertyName of Object.keys(obj).filter(name => name.startsWith("$$"))) {
-        const result = obj[propertyName];
-        obj[propertyName.substring(2)] = () => result;
+        // Read the property lazily: flatted calls the reviver before nested
+        // references are resolved, so capturing the value here would freeze a
+        // placeholder instead of the actual object or array.
+        obj[propertyName.substring(2)] = () => obj[propertyName];
       }
       return obj;
     }
