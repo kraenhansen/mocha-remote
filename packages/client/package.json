@@ -41,7 +41,7 @@
     "@rollup/plugin-commonjs": "^28.0.1",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
-    "chai": "^4.3.4",
+    "chai": "^6.2.2",
     "mocha-remote-mocha": "*",
     "rollup": "^4.59.0",
     "rollup-plugin-dts": "^6.1.0",
