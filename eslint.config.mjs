@@ -1,12 +1,14 @@
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import expo from "eslint-config-expo/flat.js";
 import prettier from "eslint-config-prettier/flat";
+import { defineConfig } from "eslint/config";
 import globals from "globals";
 
 // Migrated from the "eslintConfig" sections of the package.json files, which
 // ESLint stopped reading in v9 and dropped support for entirely in v10.
-export default [
+export default defineConfig([
   {
     ignores: ["**/dist/"],
   },
@@ -82,14 +84,22 @@ export default [
     languageOptions: { globals: { ...globals.commonjs, ...globals.node } },
   },
 
-  // examples/expo - used to extend "@react-native", which cannot run on ESLint
-  // 10: it is eslintrc-only and its plugins reach for APIs that were removed.
+  // examples/expo - used to extend "@react-native", which is eslintrc-only and
+  // whose plugins reach for APIs that ESLint 10 removed. eslint-config-expo is
+  // the config Expo recommends and ships a flat entry point. Its config objects
+  // carry no "files" of their own, so scope them to the example here.
+  //
+  // The react version has to be pinned rather than left at eslint-config-expo's
+  // "detect": detecting it calls context.getFilename(), which ESLint 10 removed,
+  // and that throws before any rule runs. Pinning is what eslint-plugin-react
+  // recommends anyway, since detection walks the file system on every run.
   {
     files: ["examples/expo/**"],
-    languageOptions: { globals: globals.node },
+    extends: [expo],
+    settings: { react: { version: "18.2" } },
   },
   {
     files: ["examples/expo/*.config.js"],
-    languageOptions: { sourceType: "commonjs" },
+    languageOptions: { sourceType: "commonjs", globals: globals.node },
   },
-];
+]);
