@@ -175,7 +175,6 @@ export async function startServer({ log, server, command, exitOnError }: ServerO
 
     cleanupTasks.add(killCommandProcess);
 
-    /* eslint-disable-next-line no-console */
     log(
       chalk.dim(`Running: ${commandDescription}`),
       '\n'

@@ -18,7 +18,6 @@ new Client({
     fs.writeFileSync(outFile, JSON.stringify({ pid: process.pid }), "utf8");
 
     if (endlessLoop) {
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         // Useful to simulate a process that cannot be exited gracefully
       }

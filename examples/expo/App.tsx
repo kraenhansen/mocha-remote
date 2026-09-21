@@ -10,6 +10,8 @@ import {
 } from 'mocha-remote-react-native';
 
 function loadTests() {
+  // Deliberately required lazily, so the tests can be re-loaded on every run
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   require('./simple.test.js');
 }
 

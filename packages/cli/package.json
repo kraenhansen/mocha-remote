@@ -57,22 +57,6 @@
     "@types/yargs": "^17.0.32",
     "mocha-remote-client": "1.13.2"
   },
-  "eslintConfig": {
-    "parserOptions": {
-      "sourceType": "module"
-    },
-    "env": {
-      "node": true
-    },
-    "overrides": [
-      {
-        "files": "src/**/*.test.ts",
-        "env": {
-          "mocha": true
-        }
-      }
-    ]
-  },
   "mocha": {
     "import": "tsx",
     "extension": [

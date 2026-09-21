@@ -28,10 +28,5 @@
     "mocha-remote-cli": "1.13.2",
     "mocha-remote-client": "1.13.2",
     "mocha-remote-server": "1.13.2"
-  },
-  "eslintConfig": {
-    "env": {
-      "node": true
-    }
   }
 }
