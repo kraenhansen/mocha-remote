@@ -32,7 +32,7 @@
     }
   },
   "dependencies": {
-    "expo": "~52.0.25",
+    "expo": "~52.0.47",
     "expo-status-bar": "~1.12.1",
     "mocha-remote-react-native": "1.12.3",
     "react": "18.2.0",
@@ -41,7 +41,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@react-native/eslint-config": "0.77.0",
-    "@types/react": "~18.3.1"
+    "@types/react": "~18.3.31"
   },
   "eslintConfig": {
     "root": true,
