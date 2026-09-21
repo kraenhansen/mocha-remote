@@ -96,7 +96,7 @@ export default defineConfig([
   {
     files: ["examples/expo/**"],
     extends: [expo],
-    settings: { react: { version: "18.2" } },
+    settings: { react: { version: "19.2" } },
   },
   {
     files: ["examples/expo/*.config.js"],

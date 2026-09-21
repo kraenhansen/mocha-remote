@@ -6,6 +6,10 @@
     "packages/*",
     "examples/*"
   ],
+  "overrides": {
+    "react": "19.2.3",
+    "react-native": "0.86.3"
+  },
   "scripts": {
     "lint": "eslint .",
     "build": "nx run-many -t build",
