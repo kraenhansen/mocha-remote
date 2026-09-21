@@ -28,7 +28,7 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "devDependencies": {
-    "chai": "^4.3.4"
+    "chai": "^6.2.2"
   },
   "dependencies": {
     "debug": "^4.3.1"
