@@ -42,10 +42,14 @@ export const MochaRemoteContext = createContext<MochaRemoteContextValue>({
 });
 
 function isExternalFrame({ file }: StackFrame) {
+  // Frames without a file cannot be attributed to the client, so keep them
+  if (!file) {
+    return true;
+  }
   return !file.includes("/mocha-remote/packages/client/dist/") && !file.includes("/mocha-remote-client/dist/")
 }
 
-function framesToStack(error: Error, frames: StackFrame[]) {
+function framesToStack(error: Error, frames: readonly StackFrame[]) {
   const lines = frames.filter(isExternalFrame).map(({ methodName, column, file, lineNumber }) => {
     return `    at ${methodName} (${file}:${lineNumber}:${column})`
   });
@@ -61,11 +65,8 @@ export function MochaRemoteProvider({ children, tests, title = `React Native on 
       title,
       async transformFailure(_, err) {
         try {
-          // TODO: Remove the following two "ts-expect-error" once https://github.com/facebook/react-native/pull/43566 gets released
-          // @ts-expect-error -- This is a private API
           const stack = parseErrorStack(err.stack);
           const symbolicated = await symbolicateStackTrace(stack);
-          // @ts-expect-error -- This is a private API
           err.stack = framesToStack(err, symbolicated.stack);
           return err;
         } catch (symbolicateError) {
