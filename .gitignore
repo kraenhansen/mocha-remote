@@ -3,6 +3,9 @@ packages/*/dist/
 packages/*/docs/
 packages/*/README.md
 
+# Custom README files
+!packages/react-native/README.md
+
 # Mac files
 .DS_Store
 
