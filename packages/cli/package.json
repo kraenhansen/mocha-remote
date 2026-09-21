@@ -43,7 +43,7 @@
   "bugs": "https://github.com/kraenhansen/mocha-remote/issues",
   "license": "ISC",
   "dependencies": {
-    "chalk": "^5.3.0",
+    "chalk": "^6.0.0",
     "debug": "^4.3.1",
     "mocha-remote-server": "1.13.2",
     "yargs": "^17.7.2"
