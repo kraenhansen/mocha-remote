@@ -26,24 +26,5 @@
   },
   "peerDependency": {
     "debug": "^4.3.3"
-  },
-  "eslintConfig": {
-    "parserOptions": {
-      "sourceType": "commonjs"
-    },
-    "env": {
-      "commonjs": true
-    },
-    "rules": {
-      "@typescript-eslint/no-var-requires": "off"
-    },
-    "overrides": [
-      {
-        "files": "webpack.config.js",
-        "env": {
-          "node": true
-        }
-      }
-    ]
   }
 }

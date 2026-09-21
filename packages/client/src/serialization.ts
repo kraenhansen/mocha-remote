@@ -6,7 +6,6 @@ const debug = extend("serialization");
 
 type Replacer = (this: unknown, key: string, value: unknown) => unknown;
 
-/* eslint-disable-next-line @typescript-eslint/ban-types */
 export type SerializedCache = WeakMap<object, Record<string, unknown>>;
 
 function toJSON(value: Record<string, unknown>): Record<string, unknown> {

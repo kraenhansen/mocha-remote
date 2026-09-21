@@ -50,19 +50,6 @@
     "webpack": "^5.105.0",
     "webpack-cli": "^5.1.4"
   },
-  "eslintConfig": {
-    "parserOptions": {
-      "sourceType": "module"
-    },
-    "overrides": [
-      {
-        "files": "rollup.config.js",
-        "env": {
-          "node": true
-        }
-      }
-    ]
-  },
   "mocha": {
     "import": "tsx",
     "extension": [
