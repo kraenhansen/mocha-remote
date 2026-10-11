@@ -2,6 +2,7 @@
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     // React Native 0.80+ only ships the deep-import ("react-native/Libraries/...")
     // declarations under this resolution condition.
     "customConditions": ["react-native", "react-native-legacy-deep-imports"],
