@@ -39,7 +39,7 @@
     "@nx/js": "^23.3.0",
     "chai": "^6.2.2",
     "eslint": "^10.11.0",
-    "eslint-config-expo": "^57.0.2",
+    "eslint-config-expo": "^58.0.4",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
     "mocha": "11.0.1",
